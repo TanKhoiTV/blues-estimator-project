@@ -177,6 +177,20 @@ uv run pre-commit install
 If your code has any associated tests, run the test scripts.
 If there isn't any test, add the test yourself within the same commit.
 
+Use `pytest.approx()` from `pytest` for testing.
+
+To run the entire suite:
+
+```bash
+uv run pytest
+```
+
+To run tests for a specific part of the project:
+
+```bash
+uv run pytest tests/test_file.py
+```
+
 ### Commit Your Changes
 
 Follow the commit naming guide above.
