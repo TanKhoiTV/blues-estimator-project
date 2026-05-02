@@ -20,6 +20,8 @@ dev = [
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
     "ruff>=0.15.12",
+    "scikit-learn>=1.8.0",
+    "statsmodels>=0.14.6",
 ]
 
 [tool.black]

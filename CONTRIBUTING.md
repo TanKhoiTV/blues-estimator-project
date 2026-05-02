@@ -60,12 +60,12 @@ To ensure you are using the project's isolated environment, prefix your commands
 
 ## Sync the Repository
 
-If you worked on this repo before, sync your local `main` branch to the upstream branch with:
+If you worked on this repo before, sync your local `main` branch to the remote branch with:
 
 ```bash
 git fetch --all
 git checkout main
-git pull upstream main --rebase
+git pull origin main --rebase
 ```
 
 If you have a working branch, sync it as well, after syncing the `main` branch:
