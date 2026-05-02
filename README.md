@@ -107,7 +107,7 @@ The report should include the following sections:
 ## Other Specifications
 
 - Python code must be formatted and linted with `Black` and `Ruff`
-- Docstring coverage reaches 80%.
+- Docstring coverage reaches 90%.
 - All plots drawn must include a title, axis labels, and legends.
 - Explain all data-related decisions with math.
 - Set static `random_state` and `seed` to get reproducible results.

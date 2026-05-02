@@ -1,7 +1,7 @@
 [project]
 name = "blues-estimator-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "Implementation of Best Linear Unbiased Estimators from scratch"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=26.3.1",
+    "interrogate>=1.7.0",
     "jupyter>=1.1.1",
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
@@ -23,3 +24,22 @@ dev = [
 
 [tool.black]
 target-version = ["py312"]
+
+[tool.ruff]
+lint.select = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint]
+ignore = ["D100", "D104"]
+
+[tool.interrogate]
+ignore-init-method = true   # Skip __init__ methods
+ignore-magic = true         # Skip magic methods like __str__ or __add__
+ignore-semiprivate = true   # Skip _semiprivate methods (starting with one underscore)
+ignore-private = true       # Skip __private methods (starting with two underscores)
+ignore-property-decorators = false  # skips methods decorated with @property, @<prop>.setter, and @<prop>.deleter
+fail-under = 90             # Fail when coverage percentage is less than the given amount
+exclude = ["setup.py", "main.py", "tests", "docs"]
+verbose = 1                 # Print a file-by-file summary

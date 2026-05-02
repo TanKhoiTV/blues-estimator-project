@@ -1,6 +1,6 @@
 # Contributing to Blues Estimator Project
 
-To start contributing, follow the steps.
+To start contributing, follow the steps. Note that some commands shown below have a dot `.` parameter indicating the current directory. In most cases run these commands from root and be mindful to not miss it.
 
 ## Clone the Repository
 
@@ -41,8 +41,7 @@ From the root of the repository, run:
 uv sync
 ```
 
-Optionally, you can install the **pre-commit hook** to automatically format and lint your code every time you commit.
-This requires a separate one-time installation step.
+Optionally, you can install the **pre-commit hook** to automatically format and lint your code every time you commit. See [**Making a Commit** section](#making-a-commit) at the end. This requires a separate one-time installation step.
 
 ```bash
 uv run pre-commit install
@@ -83,8 +82,7 @@ Remember to **sync** your local `main` branch first! Then from the local `main` 
 git checkout -b <your-branch-name>
 ```
 
-Your branches should only be owned by only person, and that is _you_. Don't let anybody commit onto them.
-If you find yourself needing some help with your branches, consider the branches are overachieving.
+Your branches should only be owned by one person, and that is _you_. Don't let anybody commit onto them. If you find yourself needing some help with your branches, consider splitting the work across smaller branches.
 
 ## Branch and Commit Naming
 
@@ -165,11 +163,66 @@ uv run black .
 uv run ruff check --fix .
 ```
 
-If you get tired of running the commands every time, you can install the **pre-commit hook**.
-Run this once, preferably after you just cloned the repo:
+If you get tired of running the commands every time, you can install the pre-commit hook. Run this once, preferably after you just cloned the repo:
 
 ```bash
 uv run pre-commit install
+```
+
+### Docstring Style
+
+Docstrings must follow the **NumPy convention** and are enforced by Ruff's `D` ruleset. This is checked automatically alongside other lint rules when you run:
+
+```bash
+uv run ruff check --fix .
+```
+
+A minimal compliant docstring looks like this:
+
+```python
+def fit(X: np.ndarray, y: np.ndarray) -> None:
+    """Fit the OLS model using the normal equations.
+
+    Parameters
+    ----------
+    X : np.ndarray of shape (n_samples, n_features)
+        Design matrix.
+    y : np.ndarray of shape (n_samples,)
+        Response vector.
+
+    Returns
+    -------
+    None
+        Coefficients are stored in ``self.beta_``.
+
+    Raises
+    ------
+    ValueError
+        If ``X`` and ``y`` have incompatible shapes.
+    """
+```
+
+Key rules to keep in mind:
+
+* Summary line is a single sentence in **imperative mood**: "Fit", "Compute", "Return", not "Fits", "Computes", "Returns"
+* Leave a blank line between the summary and the `Parameters` section.
+* Section headers (`Parameters`, `Returns`, `Raises`) are followed by a `----------` underline matching the header length exactly.
+* Each parameter is documented as `name : type` on one line with the description indented on the line below.
+
+### Check for Documentation Coverage
+
+Use **interrogate** to check if docstring coverage passes the minimum threshold. From root:
+
+```bash
+uv run interrogate .
+```
+
+This is run automatically every time you commit with level-1 verbosity (showing the coverage per-file) if you have **pre-commit hook** installed.
+
+To see which functions are missing docstrings, run with higher verbosity:
+
+```bash
+uv run interrogate -v 2 .
 ```
 
 ### Run the Tests
@@ -177,7 +230,7 @@ uv run pre-commit install
 If your code has any associated tests, run the test scripts.
 If there isn't any test, add the test yourself within the same commit.
 
-Use `pytest.approx()` from `pytest` for testing.
+Use `pytest.approx()` from `pytest` for floating point comparisons.
 
 To run the entire suite:
 
