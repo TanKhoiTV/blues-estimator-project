@@ -65,7 +65,7 @@ If you worked on this repo before, sync your local `main` branch to the upstream
 ```bash
 git fetch --all
 git checkout main
-git pull upstream main --rebase
+git pull origin main --rebase
 ```
 
 If you have a working branch, sync it as well, after syncing the `main` branch:
