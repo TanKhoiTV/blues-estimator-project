@@ -26,8 +26,7 @@ dev = [
 target-version = ["py312"]
 
 [tool.ruff.lint]
-select = ["D"]
-ignore = ["D100", "D104"]
+select = ["D2", "D4"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
@@ -39,5 +38,5 @@ ignore-semiprivate = true   # Skip _semiprivate methods (starting with one under
 ignore-private = true       # Skip __private methods (starting with two underscores)
 ignore-property-decorators = false  # skips methods decorated with @property, @<prop>.setter, and @<prop>.deleter
 fail-under = 90             # Fail when coverage percentage is less than the given amount
-exclude = ["setup.py", "main.py", "tests", "docs"]
+exclude = ["setup.py", "tests", "docs"]
 verbose = 1                 # Print a file-by-file summary
