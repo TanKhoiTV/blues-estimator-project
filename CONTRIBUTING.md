@@ -60,7 +60,7 @@ To ensure you are using the project's isolated environment, prefix your commands
 
 ## Sync the Repository
 
-If you worked on this repo before, sync your local `main` branch to the upstream branch with:
+If you worked on this repo before, sync your local `main` branch to the remote branch with:
 
 ```bash
 git fetch --all
