@@ -1,6 +1,9 @@
 # Contributing to Blues Estimator Project
 
-To start contributing, follow the steps. Note that some commands shown below have a dot `.` parameter indicating the current directory. In most cases run these commands from root and be mindful to not miss it.
+To start contributing, follow the steps.
+
+> [!NOTE]
+> Some commands shown below have a dot `.` parameter indicating the current directory. In most cases run these commands from root and be mindful to not miss it.
 
 ## Clone the Repository
 
@@ -76,7 +79,8 @@ git rebase main
 
 This project has a rule to protect the `main` branch from direct commits, so you have to create your own branch if you want to contribute.
 
-Remember to **sync** your local `main` branch first! Then from the local `main` branch:
+> [!IMPORTANT]
+> Remember to **sync** your local `main` branch first! Then from the local `main` branch:
 
 ```bash
 git checkout -b <your-branch-name>
@@ -156,7 +160,7 @@ Callers must update match arms to use the new variant types.
 
 ### Format and Lint Locally
 
-Using **Black** and **Ruff** (already installed with `uv`), run these commands from the root directory to fix styling issues:
+Using `Black` and `Ruff` (already installed with `uv`), run these commands from root to fix styling issues:
 
 ```bash
 uv run black .
@@ -177,7 +181,7 @@ Docstrings must follow the **NumPy convention** and are enforced by Ruff's `D` r
 uv run ruff check --fix .
 ```
 
-A minimal compliant docstring looks like this:
+A minimal compliant docstring should look like this:
 
 ```python
 def fit(X: np.ndarray, y: np.ndarray) -> None:
@@ -211,7 +215,7 @@ Key rules to keep in mind:
 
 ### Check for Documentation Coverage
 
-Use **interrogate** to check if docstring coverage passes the minimum threshold. From root:
+Use `interrogate` to check if docstring coverage passes the minimum threshold. From root:
 
 ```bash
 uv run interrogate .
@@ -247,3 +251,123 @@ uv run pytest tests/test_file.py
 ### Commit Your Changes
 
 Follow the commit naming guide above.
+
+> [!NOTE]
+> If you have `pre-commit` hook installed, your commit can fail because of pre-commit checks. If it is due to formatting and linting, just re-commit. If it is due to docstring coverage fail, add the docstrings before trying again.
+
+## Issues and Pull Requests
+
+### Working with Issues
+
+There are two pre-configured templates you can choose when opening a new issue.
+
+#### Task Creation
+
+This defines a new task for the team to work on, letting the project completes its roadmap. Upon opening a _task creation_ issue, there are a few sections to fill in.
+
+* **Description**: A clear and concise description of what the task is about.
+* **Definition of Done**: A clear and concise description of what is needed for the task to be considered _finished_. Creating sub-issues to help completing the task is recommended.
+* **Proposed Implementation**: An explanation of how the task can be done. Suggest which files are affected.
+* **Additional context**: Add any other context or screenshots about the task.
+
+#### Bug Report
+
+Use this template when bringing potential problems that need to be solved.
+
+* **Describe the bug/problem**: A clear and concise description of what the bug is.
+* **To Reproduce**: The steps needed to reproduce the bug if needed.
+* **Expected behavior**: A clear and concise description of what you expected to happen.
+* **Screenshots**: If applicable, add screenshots to help explain your problem.
+* **Additional context**: Add any other context about the problem here e.g. where the bug might be.
+
+#### Blank Issue
+
+Use this only if your issue is genuinely neither a task nor a bug; for example, a question about project direction or a process concern. If either template fits even partially, prefer it over a blank issue.
+
+> [!NOTE]
+> **Feature requests** are out of scope for this project. If you have a suggestion, raise it in the team channel instead. It may be considered for a future iteration.
+
+Whichever template you choose, please be as specific as possible with your issues. Use proper tags to categorize the issue.
+
+### Creating Pull Requests
+
+The remote `main` branch is protected against direct merges. To merge your working branch, create a **pull request**. Follow these steps for a successful PR!
+
+#### Publish Your Working Branch
+
+If you didn't already, publish your working branch to remote.
+
+> [!IMPORTANT]
+> If you are not yet a collaborator on the repository, fork it first and publish your branch to your fork instead. Open the PR from your fork's branch against the upstream `main` branch.
+
+Checkout your branch with `git checkout <branch-name>`, then:
+
+```bash
+git push -u origin <branch-name>
+```
+
+The `-u` flag sets the upstream tracking, so future `git push` and `git pull` commands in that branch work without specifying the remote.
+
+> [!NOTE]
+> Here's a quick Git reference:
+> **Creating a Local Branch and Publish to Remote**
+>
+> ```bash
+> git checkout -b <branch>      # create + switch
+> git push -u origin <branch>   # publish + set tracking
+> ```
+>
+> **Viewing branches**
+>
+> ```bash
+> git branch                    # local branches
+> git branch -r                 # remote branches
+> git branch -a                 # both
+> git branch -vv                # local branches + their tracking remotes
+> ```
+>
+> **Set/unset tracking**
+>
+> ```bash
+> git branch -u origin/<branch-name>    # set upstream for current branch
+> git branch -u origin/<remote> <local> # set upstream for a specific branch
+> git branch --unset-upstream           # unset for current branch
+> ```
+>
+> **Push, Pull, Fetch**
+>
+> ```bash
+> git fetch                     # download remote changes, don't merge
+> git fetch origin <branch>     # fetch a specific branch only
+> git pull                      # fetch + merge (or rebase if configured)
+> git pull --rebase             # fetch + rebase instead of merge
+> git push                      # push current branch to its upstream
+> git push origin <branch>      # push a specific branch explicitly
+> git push --force-with-lease   # force push, but abort if remote has new commits
+> ```
+>
+> **Deleting branches**
+>
+> ```bash
+> git branch -d <branch>        # delete local (safe — refuses if unmerged)
+> git branch -D <branch>        # force delete local
+> git push origin -d <branch>   # delete remote
+> ```
+>
+
+#### Create a Pull Request
+
+When your code is ready for review, open a PR against the `main` branch using the provided PR Template.
+
+* **Update your branch** frequently to prevent merge conflicts, especially right after opening a PR.
+* **Keep your PR focused** on a single feature or fix to make review smoother.
+* **Reference the issue** using `Closes #<issue-number>` in your PR description.
+* **Assign a reviewer** to get your PR reviewed quicker.
+* **Resolve all CI checks** and conversations in order to get your PR accepted.
+  If a check fails, fix it locally using the relevant section of this guide ([Format and Lint Locally](#format-and-lint-locally), [Check for Documentation Coverage](#check-for-documentation-coverage), [Run the Tests](#run-the-tests)), then push again.
+* **Delete your local branch** after a successful merge. GitHub will automatically delete the remote branch. To clean up locally:
+
+```bash
+  git checkout main
+  git branch -d <branch-name>
+```
