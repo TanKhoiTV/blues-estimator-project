@@ -25,14 +25,12 @@ dev = [
 [tool.black]
 target-version = ["py312"]
 
-[tool.ruff]
-lint.select = ["D"]
+[tool.ruff.lint]
+select = ["D"]
+ignore = ["D100", "D104"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-
-[tool.ruff.lint]
-ignore = ["D100", "D104"]
 
 [tool.interrogate]
 ignore-init-method = true   # Skip __init__ methods
