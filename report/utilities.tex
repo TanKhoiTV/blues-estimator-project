@@ -1,0 +1,144 @@
+\chapter{Tiện ích}
+
+\newpage
+
+\section{Images}
+
+% chèn một tấm
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{}
+    \caption{}
+    \label{fig:example_image}
+\end{figure}
+
+% chèn nhiều ảnh theo hàng ngang
+\begin{figure}[h!]
+    % \vspace{0.25cm}
+    \centering
+    \scalebox{1}{
+        \begin{minipage}{\textwidth}
+            \centering
+            \includegraphics[width=0.24\textwidth]{images/chapter_02/svd-1.png}\hfill
+            \includegraphics[width=0.24\textwidth]{images/chapter_02/svd-2.png}\hfill
+            \includegraphics[width=0.24\textwidth]{images/chapter_02/svd-3.png}\hfill
+            \includegraphics[width=0.24\textwidth]{images/chapter_02/svd-4.png}
+        \end{minipage}
+    }
+    \caption{Các bước phân rã SVD}
+    \label{fig:svd_decomp_steps}
+\end{figure}
+
+\section{Table}
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \setlength{\tabcolsep}{6pt}
+    \begin{tabular}{|p{1cm}|p{2cm}|p{5cm}|p{6cm}|}
+        \hline
+        \rowcolor[rgb]{0.8, 0.9, 1.0}
+        \textbf{STT} & \textbf{MSSV} & \textbf{Họ và tên} & \textbf{Email} \\ \hline
+        1 & 24120010 & Trần Văn Tấn Khôi & 24120010@student.hcmus.edu.vn \\ \hline
+        2 & 24120028 & Cao Việt Cường & 24120028@student.hcmus.edu.vn \\ \hline
+        3 & 24120035 & Lê Thành Đạt & 24120035@student.hcmus.edu.vn \\ \hline
+        4 & 24120038 & Nguyễn Phú Đạt & 24120038@student.hcmus.edu.vn \\ \hline
+        5 & 24120054 & Mai Phan Nhật Hoàng & 24120054@student.hcmus.edu.vn \\ \hline
+    \end{tabular}
+    \caption{Thông tin nhóm}
+\end{table}
+
+\section{Lists}
+
+\begin{itemize}[topsep=0pt, itemsep=2.5pt, leftmargin=1.5cm]
+    \item Lý thuyết: Tìm hiểu các kiến thức lý thuyết liên quan: khái niệm, thành phần, mô hình triển khai, giải pháp kết nối - cấu hình cho các thiết bị: Laptop - Desktop - Smartphone.
+    \item Thực hành - demo: Thực hiện cấu hình các thiết bị để xây dựng mạng WLAN thực tế: quay video cách cấu hình các thiết bị:
+
+    \begin{itemize}[label=\ding{111}, leftmargin=1.5cm]
+        \item Cấu hình các chức năng router: đặt tên router (SSID) là tên nhóm (\textit{xxCLCxx-Nxx, ví dụ: 19CLC5-N01})
+        \item Cấu hình từng loại thiết bị kết nối vô mạng (cần có minh chứng kiểm tra việc kết nối thành công)
+        \item Trong video phải có:
+
+        \begin{itemize}[label=\ding{112}, leftmargin=1.5cm]
+            \item Thông tin giải thích từng bước cấu hình (thu tiếng trong quá trình làm)
+            \item Người thực hiện cấu hình.
+        \end{itemize}
+        \item Lưu ý: nếu thiết bị không hỗ trợ ad-hoc thì làm trên máy ảo.
+    \end{itemize}
+\end{itemize}
+
+\newpage
+
+\section{Codebox}
+
+\begin{codebox}[naiveSolution]{Naive Approach}
+    \begin{minted}{c++}
+    class Player {
+        int currentHealth = 100;
+        // Player phụ thuộc trực tiếp vào các class cụ thể này
+        HealthBarUI healthBar;
+        AudioManager audioManager;
+        GameManager gameManager;
+        public void takeDamage(int amount) {
+            this.currentHealth -= amount;
+            // Cập nhật UI - Player phải biết hàm update của UI
+            healthBar.updateBar(this.currentHealth);
+            // Xử lý âm thanh - Player phải biết logic âm thanh
+            if (this.currentHealth < 20)
+                audioManager.playHeartbeatSound();
+            else
+                audioManager.playHitSound();
+            // Xử lý logic khi máu người chơi không dương
+            if (this.currentHealth <= 0)
+                gameManager.remove(this);
+        }
+    };
+    \end{minted}
+\end{codebox}
+
+\section{Psuedocode}
+
+\begin{algorithm}[H]
+\caption{\textproc{nextFrame()}}
+\begin{algorithmic}[1]
+\Procedure{nextFrame(file)}{}
+    \State $SOI \gets \texttt{\{FF D8\}}$
+    \State $EOI \gets \texttt{\{FF D9\}}$
+
+    \State $frame\_data \gets \emptyset$
+
+    \State $data \gets$ đọc 2 byte từ file
+    \If{$data$ là rỗng}
+        \State \Return \texttt{None}
+    \EndIf
+
+    \While{$data \neq SOI$}
+        \State $pos \gets$ vị trí hiện tại của con trỏ file
+        \State đưa con trỏ file về $(pos - 1)$
+        \State $data \gets$ đọc 2 byte tiếp theo
+        \If{$data$ là rỗng}
+            \State \Return \texttt{None}
+        \EndIf
+    \EndWhile
+
+    \State $frame\_data \gets SOI$
+    \State $last\_byte \gets$ rỗng
+
+    \While{True}
+        \State $current\_byte \gets$ đọc 1 byte từ file
+        \If{$current\_byte$ là rỗng}
+            \State \Return \texttt{None}
+        \EndIf
+
+        \State nối $current\_byte$ vào $frame\_data$
+
+        % \If{$last\_byte = \texttt{FF}$ \textbf{and} $current\_byte = \texttt{D9}$}
+        %     \State tăng bộ đếm frame
+        %     \State \Return $frame\_data$
+        % \EndIf
+
+        \State $last\_byte \gets current\_byte$
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
