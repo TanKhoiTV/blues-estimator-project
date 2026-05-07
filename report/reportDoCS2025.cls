@@ -23,12 +23,29 @@
 %--------------------------------------
 
 % Language and encoding
-\RequirePackage[utf8]{inputenc}
-\if@vietnamese
-    \RequirePackage[utf8]{vietnam}
-\fi
-\if@english
-    \RequirePackage[english]{babel}
+\RequirePackage{iftex}
+\ifPDFTeX
+    \RequirePackage[T1]{fontenc}
+    \RequirePackage[utf8]{inputenc}
+    \if@vietnamese
+        \RequirePackage[utf8]{vietnam}
+    \fi
+    \if@english
+        \RequirePackage[english]{babel}
+    \fi
+\else
+    \RequirePackage{fontspec}
+    \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+    \setmainfont{TeX Gyre Termes}
+    \setsansfont{TeX Gyre Heros}
+    \setmonofont{Latin Modern Mono}
+    \RequirePackage{polyglossia}
+    \if@vietnamese
+        \setdefaultlanguage{vietnamese}
+    \fi
+    \if@english
+        \setdefaultlanguage{english}
+    \fi
 \fi
 
 % Essential packages
@@ -207,7 +224,7 @@
 
 % Main page style
 \fancyhead[L]{
-    \raisebox{-0.2\height}{\includegraphics[height=1cm]{logos/logo-hcmus-fit-v2.png}}
+    \raisebox{-0.2\height}{\includegraphics[height=1cm]{images/logos/logo-hcmus-fit-v2.png}}
 }
 \fancyhead[R]{\textcolor{docs_gray}{\textit{Báo cáo đồ án - Nhóm 5}}}
 \fancyfoot[C]{\textbf{\thepage}}
@@ -250,7 +267,7 @@
 
             \vspace{0.5cm}
 
-            \includegraphics[width=0.45\textwidth]{logos/logo_hcmus.png}\\[1cm]
+            \includegraphics[width=0.45\textwidth]{images/logos/logo_hcmus.png}\\[1cm]
             
             \vspace{0.1cm}
             
