@@ -31,8 +31,6 @@
     \RequirePackage[english]{babel}
 \fi
 
-\usepackage{vietnam}[utf8]
-
 % Essential packages
 \RequirePackage{silence}
 \RequirePackage{xcolor}
