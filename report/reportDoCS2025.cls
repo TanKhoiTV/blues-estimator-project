@@ -33,7 +33,7 @@
 
 % Essential packages
 \RequirePackage{silence}
-\RequirePackage{xcolor}
+\RequirePackage[table]{xcolor}
 \RequirePackage{geometry}
 \RequirePackage{microtype}
 \RequirePackage[fontsize=12pt]{scrextend}
