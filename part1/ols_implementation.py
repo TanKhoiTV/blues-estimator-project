@@ -9,10 +9,11 @@ def ols_fit(X, y):
 
 
 def hat_matrix(X):
-    """Compute $H = X(X^T X)^{-1} X^T$ and check for idempotency."""
+    """Compute the Hat Matrix $H = X(X^T X)^{-1} X^T$."""
     X = np.array(X)
-    # Công thức: H = X * (X.T @ X)^-1 @ X.T
-    xtx_inv = np.linalg.inv(X.T @ X)
+    if X.size == 0:
+        raise ValueError("Input matrix X cannot be empty.")
+    xtx_inv = np.linalg.pinv(X.T @ X)
     h_mat = X @ xtx_inv @ X.T
     return h_mat
 
