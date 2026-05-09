@@ -9,8 +9,12 @@ def ols_fit(X, y):
 
 
 def hat_matrix(X):
-    """Compute matrix H and check for idempotency."""
-    pass
+    """Compute $H = X(X^T X)^{-1} X^T$ and check for idempotency."""
+    X = np.array(X)
+    # Công thức: H = X * (X.T @ X)^-1 @ X.T
+    xtx_inv = np.linalg.inv(X.T @ X)
+    h_mat = X @ xtx_inv @ X.T
+    return h_mat
 
 
 def model_metrics(y, y_hat, p):
