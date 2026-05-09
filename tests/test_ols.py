@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit    
+from part1.ols_implementation import ols_fit
 
 
 class TestOLSFit:
