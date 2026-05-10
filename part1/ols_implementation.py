@@ -7,20 +7,20 @@ def ols_fit(X, y):
     """Compute OLS solution (beta_hat) and Residual Variance Estimator."""
     X = np.array(X)
     y = np.array(y)
-    
+
     # 1. Tính beta_hat bằng công thức: (X^T * X)^-1 * X^T * y
     # Sử dụng np.linalg.pinv để xử lý cả trường hợp ma trận bị suy biến (đa cộng tuyến)
     beta_hat = np.linalg.pinv(X.T @ X) @ X.T @ y
-    
+
     # 2. Tính toán sigma^2 (phương sai sai số)
     n, p = X.shape
     y_hat = X @ beta_hat
     residuals = y - y_hat
-    
+
     # Công thức: RSS / (n - p)
     # n - p là bậc tự do (degrees of freedom)
     sigma2 = np.sum(residuals**2) / (n - p)
-    
+
     return beta_hat, sigma2
 
 
