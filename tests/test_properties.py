@@ -64,7 +64,7 @@ class TestHatMatrix:
         H = hat_matrix(X)
 
         # Verify its properties
-        assert H.shape == 3
+        assert H.shape == (3, 3)
 
         assert np.all(np.diag(H) >= 0)
         assert np.all(np.diag(H) <= 1)
