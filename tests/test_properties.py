@@ -109,3 +109,25 @@ class TestHatMatrix:
         diag_H = np.diag(H)
         assert np.all(diag_H >= -1e-10)
         assert np.all(diag_H <= 1 + 1e-10)
+
+    def test_multicollinearity(self):
+        """Test multicollinearity: Column 3 is exactly twice Column 2."""
+        X = np.array([[1, 2, 4], [1, 3, 6], [1, 4, 8], [1, 5, 10]])
+        H = hat_matrix(X)
+        # H^2 = H even with perfect collinearity
+        np.testing.assert_array_almost_equal(H @ H, H, decimal=10)
+
+    def test_fat_matrix(self):
+        """Test Edge Case: 'Fat' Matrices (N < P)."""
+        np.random.seed(42)
+        X = np.random.rand(3, 5)
+        H = hat_matrix(X)
+        # Output should be N x N
+        assert H.shape == (3, 3)
+        np.testing.assert_array_almost_equal(H @ H, H, decimal=10)
+
+    def test_numerical_stability_zeros(self):
+        """Test Numerical Stability: Let a column be of zeros."""
+        X = np.array([[1, 0, 3], [1, 0, 4], [1, 0, 5], [1, 0, 6]])
+        H = hat_matrix(X)
+        np.testing.assert_array_almost_equal(H @ H, H, decimal=10)
