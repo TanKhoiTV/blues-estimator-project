@@ -42,7 +42,7 @@ def ols_fit(X, y):
 
 def hat_matrix(X):
     """Compute the Hat Matrix H = X(X^T X)^{-1} X^T.
-    
+
     Uses pseudoinverse to handle rank-deficient cases.
     """
     X = np.asarray(X)
