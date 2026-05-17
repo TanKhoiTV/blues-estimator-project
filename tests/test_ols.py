@@ -6,7 +6,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit, vif
+# Chỉ giữ lại import ols_fit vì phần test VIF đã có file test_vif.py riêng lo liệu
+from part1.ols_implementation import ols_fit
 
 
 class TestOLSFit:
@@ -56,25 +57,3 @@ class TestOLSFit:
 
         beta_hat, sigma2_hat = ols_fit(X, y)
         assert sigma2_hat == pytest.approx(noise_std**2, rel=0.5)
-
-
-class TestVIF:
-    """Test suite for vif function."""
-
-    def test_vif_calculation(self):
-        np.random.seed(42)
-        X = np.random.rand(100, 3)
-        X[:, 0] = 1.0
-
-        vif_independent = vif(X)
-        assert len(vif_independent) == 2
-        assert np.allclose(vif_independent, [1.0, 1.0], atol=0.2)
-
-        X[:, 2] = X[:, 1] * 3.0 + np.random.normal(0, 0.01, 100)
-        vif_correlated = vif(X)
-        assert np.all(vif_correlated > 10.0)
-
-    def test_vif_validation(self):
-        X_single = np.ones((10, 1))
-        with pytest.raises(ValueError):
-            vif(X_single)
