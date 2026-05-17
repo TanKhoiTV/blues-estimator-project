@@ -83,11 +83,9 @@ def model_metrics(y, y_hat, p):
             f"Sample size n ({n}) must be strictly greater than p + 1 ({p + 1}) to compute Adjusted R^2 and F-stat."
         )
 
-    # Tính toán các chỉ số cơ bản
     rss = np.sum((y - y_hat) ** 2)
     tss = np.sum((y - np.mean(y)) ** 2)
 
-    # Tính toán MAE và RMSE bổ sung theo yêu cầu của test mới
     mae = np.mean(np.abs(y - y_hat))
     rmse = np.sqrt(rss / n)
 
@@ -98,13 +96,17 @@ def model_metrics(y, y_hat, p):
     else:
         r2 = 1 - (rss / tss)
         adj_r2 = 1 - ((n - 1) / (n - p - 1)) * (1 - r2)
-        f_stat = ((tss - rss) / p) / (rss / (n - p - 1))
+
+        # Chặn lỗi chia cho 0 khi dự báo khớp hoàn hảo (RSS = 0)
+        if rss == 0:
+            f_stat = float("inf") if (tss - rss) > 0 else 0.0
+        else:
+            f_stat = ((tss - rss) / p) / (rss / (n - p - 1))
 
     return {
         "RSS": rss,
         "TSS": tss,
         "R2": r2,
-        # Giữ cả 2 định dạng key để pass cả test cũ lẫn test mới của Khôi
         "Adjusted_R2": adj_r2,
         "Adj_R2": adj_r2,
         "F_statistic": f_stat,
