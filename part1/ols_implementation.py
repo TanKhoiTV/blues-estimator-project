@@ -71,6 +71,7 @@ def coef_inference(X, y, beta_hat, sigma2):
     y = np.asarray(y)
     beta_hat = np.asarray(beta_hat)
 
+    # FIX CODECOBBIT: Sử dụng biến y để kiểm tra shape, triệt tiêu lỗi "Unused parameter y"
     if X.shape[0] != y.shape[0]:
         raise ValueError(
             f"Mismatch: X has {X.shape[0]} samples, y has {y.shape[0]} samples."
@@ -79,31 +80,31 @@ def coef_inference(X, y, beta_hat, sigma2):
     n, p = X.shape
     df = n - p
 
-    # Ma trận hiệp biến: sigma2 * (X^T X)^+
+    # Tính toán ma trận hiệp biến bằng giả nghịch đảo
     xtx_inv = np.linalg.pinv(X.T @ X)
     cov_matrix = sigma2 * xtx_inv
 
-    # Tính Standard Errors (Căn bậc hai phần tử đường chéo chính)
+    # Tính toán các đại lượng thống kê suy diễn
     se = np.sqrt(np.maximum(0, np.diag(cov_matrix)))
-
-    # Tính t-statistics (Tránh chia cho 0 nếu SE bằng 0)
     t_stats = np.where(se > 0, beta_hat / se, 0.0)
-
-    # Tính p-values (Kiểm định 2 phía dùng hàm t.sf của scipy)
     p_values = 2 * stats.t.sf(np.abs(t_stats), df)
 
-    # Tính Khoảng tin cậy 95%
     t_crit = stats.t.ppf(0.975, df)
     ci_lower = beta_hat - t_crit * se
     ci_upper = beta_hat + t_crit * se
 
     return {
+        # Định dạng key phục vụ bộ test (tests/test_coef_inference.py)
         "standard_errors": se,
         "t_statistics": t_stats,
         "t_stats": t_stats,
         "p_values": p_values,
         "ci_lower": ci_lower,
         "ci_upper": ci_upper,
+        # Định dạng key viết hoa phục vụ file demo Notebook (part1_notebook.ipynb)
+        "SE": se,
+        "CI_lower": ci_lower,
+        "CI_upper": ci_upper,
     }
 
 
