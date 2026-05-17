@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.ols_implementation import ols_fit, model_metrics
@@ -27,7 +26,7 @@ class TestOLSFit:
         beta_true = np.array([2.5, 1.0, -0.8])
         noise_std = 0.1
 
-        # Generate design matrx
+        # Generate design matrix
         X = np.random.randn(n_samples, n_features)
         X[:, 0] = 1  # Intercept col
 
@@ -39,7 +38,6 @@ class TestOLSFit:
         beta_hat, sigma2_hat = ols_fit(X, y)
 
         # Assert estimated β is close to true β
-        # Reasonable tolerance with noise std=0.1 and n=100
         np.testing.assert_array_almost_equal(beta_hat, beta_true, decimal=1)
 
     def test_larger_sample_size(self):
@@ -107,7 +105,6 @@ class TestModelMetrics:
         assert "F_statistic" in metrics
 
         # Verify RSS calculation
-        # y - y_hat = [0.5, -0.5, 0, -1] -> squared = [0.25, 0.25, 0, 1] -> sum = 1.5
         assert np.isclose(metrics["RSS"], 1.5)
 
     def test_model_metrics_validation(self):
@@ -127,3 +124,33 @@ class TestModelMetrics:
 
         with pytest.raises(ValueError):
             model_metrics(y_short, y_hat_short, p_large)
+
+        # Kiểm tra thêm lỗi sai kiểu dữ liệu của p theo ý CodeRabbit
+        with pytest.raises(TypeError):
+            model_metrics(y_short, y_hat_short, "invalid_p_type")
+
+
+class TestModelMetricsExpanded:
+    """Bộ test mở rộng tích hợp từ các yêu cầu mới của dự án."""
+
+    def setup_method(self):
+        self.y_true = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        self.y_pred = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
+        self.p = 2
+
+    def test_perfect_fit(self):
+        """Test trường hợp dự báo khớp hoàn hảo 100%."""
+        # ĐÃ SỬA TYPO: Đổi từ self.y_pred thành self.y_true ở tham số thứ 2 
+        # để thực sự tạo ra kịch bản Perfect Fit đúng nghĩa toán học giúp R2 = 1.0
+        metrics = model_metrics(self.y_true, self.y_true, self.p)
+        assert np.isclose(metrics["R2"], 1.0)
+
+    def test_metrics_keys_and_outputs(self):
+        """Xác thực các key viết tắt mới (MAE, RMSE, Adj_R2, F_stat) có tồn tại."""
+        metrics = model_metrics(self.y_true, self.y_pred, self.p)
+        assert "Adj_R2" in metrics
+        assert "F_stat" in metrics
+        assert "MAE" in metrics
+        assert "RMSE" in metrics
+        assert metrics["MAE"] > 0
+        assert metrics["RMSE"] > 0
