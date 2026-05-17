@@ -67,8 +67,8 @@ def hat_matrix(X):
 
 
 def model_metrics(y, y_hat, p):
-    """
-    Compute statistical metrics for evaluating OLS model performance.
+    """Compute statistical metrics for evaluating OLS model performance.
+
     Metrics include: RSS, TSS, R-squared, Adjusted R-squared, and F-statistic.
     """
     y = np.asarray(y)
