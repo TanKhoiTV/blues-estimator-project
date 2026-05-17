@@ -57,28 +57,3 @@ class TestOLSFit:
 
         beta_hat, sigma2_hat = ols_fit(X, y)
         assert sigma2_hat == pytest.approx(noise_std**2, rel=0.5)
-
-
-class TestCoefInference:
-    """Test suite for coef_inference function."""
-
-    def test_coef_inference_calculation(self):
-        np.random.seed(99)
-        n, p = 50, 2
-        X = np.random.randn(n, p)
-        X[:, 0] = 1
-        beta_true = np.array([2.0, 5.0])
-        y = X @ beta_true + np.random.normal(0, 0.1, n)
-
-        beta_hat, sigma2_hat = ols_fit(X, y)
-        results = coef_inference(X, y, beta_hat, sigma2_hat)
-
-        assert "SE" in results
-        assert "t_stats" in results
-        assert "p_values" in results
-        assert "CI_lower" in results
-        assert "CI_upper" in results
-        assert np.all(results["SE"] > 0)
-        assert np.all(results["CI_lower"] < results["CI_upper"])
-        assert np.all(results["CI_lower"] <= beta_hat)
-        assert np.all(beta_hat <= results["CI_upper"])

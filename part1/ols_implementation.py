@@ -68,26 +68,37 @@ def model_metrics(y, y_hat, p):
 def coef_inference(X, y, beta_hat, sigma2):
     """Compute SE, t-stat, p-value and Confidence Intervals for coefficients."""
     X = np.asarray(X)
-    n, p_total = X.shape
-    df = n - p_total
+    beta_hat = np.asarray(beta_hat)
+    n, p = X.shape
+    df = n - p
 
-    cov_matrix = sigma2 * np.linalg.pinv(X.T @ X)
-    se = np.sqrt(np.diag(cov_matrix))
-    t_stats = beta_hat / se
-    p_values = 2 * (1 - stats.t.cdf(np.abs(t_stats), df=df))
+    # Ma trận hiệp biến: sigma2 * (X^T X)^-1
+    xtx_inv = np.linalg.pinv(X.T @ X)
+    cov_matrix = sigma2 * xtx_inv
 
-    t_crit = stats.t.ppf(0.975, df=df)
+    # Tính Standard Errors (Căn bậc hai phần tử đường chéo chính)
+    se = np.sqrt(np.maximum(0, np.diag(cov_matrix)))
+
+    # Tính t-statistics (Tránh chia cho 0 nếu SE bằng 0)
+    t_stats = np.where(se > 0, beta_hat / se, 0.0)
+
+    # Tính p-values (Kiểm định 2 phía dùng hàm t.sf của scipy)
+    p_values = 2 * stats.t.sf(np.abs(t_stats), df)
+
+    # Tính Khoảng tin cậy 95% (t_critical tại mức ý nghĩa 0.025 ở mỗi phía)
+    t_crit = stats.t.ppf(0.975, df)
     ci_lower = beta_hat - t_crit * se
     ci_upper = beta_hat + t_crit * se
 
     return {
-        "SE": se,
+        "standard_errors": se,
+        # Trả về đồng thời cả 2 key để triệt tiêu hoàn toàn KeyError
+        "t_statistics": t_stats,
         "t_stats": t_stats,
         "p_values": p_values,
-        "CI_lower": ci_lower,
-        "CI_upper": ci_upper,
+        "ci_lower": ci_lower,
+        "ci_upper": ci_upper,
     }
-
 
 def vif(X):
     """Compute Variance Inflation Factor (VIF)."""
