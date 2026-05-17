@@ -74,6 +74,40 @@ Lastly, demonstrate Gauss-Markov by simulating Monte Carlo to verify **unbiasedn
 - [ ] **Matrix Validation**: The `hat_matrix` function must numerically verify idempotency ($H^2 \approx H$) and symmetry ($H^T \approx H$).
 
 ### Part 2
+#### Summary of Dataset Research & Strategy
+
+**Source**
+- Kaggle: https://www.kaggle.com/datasets/jboysen/mri-and-alzheimers
+
+**1. Confirm the chosen dataset**
+* **Dataset Name:** OASIS Longitudinal Brain MRI Dataset (Alzheimer's Disease).
+* **Description:** A real-world dataset consisting of a longitudinal collection of 150 subjects aged 60 to 96. Each subject was scanned on two or more visits, providing clinical and cognitive metrics alongside brain volume data.
+* **Goal:** Predict the continuous cognitive decline score `MMSE` (Mini-Mental State Examination, range 0-30) using regression, based on age, education, and brain volume atrophy.
+
+**2. Summary of key features and their types**
+*(Total rows: n = 373)*
+
+| Feature Name | Type | Continuous/Discrete | Missing Values | Role | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `Subject_ID` | Categorical | N/A | 0 (0%) | Index/Group | Unique identifier for each patient. |
+| **`MMSE`** | **Numerical** | **Continuous*** | **2 (~0.5%)** | **Target** | Mini-Mental State Examination score. |
+| `Age` | Numerical | Continuous | 0 (0%) | Feature | Patient's age at the time of the visit. |
+| `nWBV` | Numerical | **Continuous** | 0 (0%) | Feature | Normalized Whole Brain Volume (brain atrophy). |
+| `eTIV` | Numerical | **Continuous** | 0 (0%) | Feature | Estimated Total Intracranial Volume. |
+| `SES` | Ordinal | Discrete | **19 (~5.09%)** | Feature | Socioeconomic Status (1 = highest, 5 = lowest). |
+
+*\*Note: While MMSE is mathematically a discrete bounded integer (0-30), it is widely accepted and treated as a continuous cognitive gradient in clinical regression modeling.*
+
+**3. Proposed train/test split ratio and `random_state`**
+* **Split Ratio:** 80% Train / 20% Test.
+* **Split Strategy:** **Group Shuffle Split** (Grouped by `Subject_ID`). 
+    * *Reasoning:* Since this is longitudinal data (the same patient appears multiple times across different visits), a standard random split might put Visit 1 of Patient A in the train set and Visit 2 of Patient A in the test set, causing severe data leakage. Grouping by Subject ID ensures a patient is strictly isolated in either the train or the test set.
+* **`random_state`:** 42 (Explicitly set for reproducibility of the OLS baseline).
+
+**4. Any features flagged as likely candidates for dropping**
+* **Flagged for Natural Missing Values:** `SES` (Socioeconomic Status) and `MMSE` in certain follow-ups.
+    * *Reasoning:* Meets the $\ge 5\%$ missing condition (specifically ~5.09% for SES). In elderly and dementia research, "Natural Missingness" occurs frequently due to patient confusion, inability to recall past income/education details, or refusal/inability to complete the full cognitive survey during a clinical visit.
+    * *Action:* **Do not drop.** Will be handled using Median Imputation or KNN Imputation to preserve the highly valuable continuous brain volume (`nWBV`, `eTIV`) records of those visits for the OLS baseline.
 
 #### Implementation
 
