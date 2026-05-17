@@ -61,6 +61,13 @@ def hat_matrix(X):
 
 def model_metrics(y, y_hat, p):
     """Compute statistical metrics for evaluating OLS model performance."""
+    if not isinstance(p, (int, np.integer)):
+        raise TypeError("p must be an integer representing the number of features.")
+    if p <= 0:
+        raise ValueError(
+            "p must be a strictly positive integer to compute F-statistic."
+        )
+
     y = np.asarray(y)
     y_hat = np.asarray(y_hat)
 
@@ -74,11 +81,6 @@ def model_metrics(y, y_hat, p):
     if n <= p + 1:
         raise ValueError(
             f"Sample size n ({n}) must be strictly greater than p + 1 ({p + 1}) to compute Adjusted R^2 and F-stat."
-        )
-
-    if p <= 0:
-        raise ValueError(
-            "p must be a strictly positive integer to compute F-statistic."
         )
 
     rss = np.sum((y - y_hat) ** 2)
@@ -100,6 +102,11 @@ def model_metrics(y, y_hat, p):
         "Adjusted_R2": adj_r2,
         "F_statistic": f_stat,
     }
+
+
+def coef_inference(X, y, beta_hat, sigma2):
+    """Compute SE, t-stat, p-value and Confidence Intervals for coefficients."""
+    pass
 
 
 def vif(X):
