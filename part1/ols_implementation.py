@@ -68,11 +68,18 @@ def model_metrics(y, y_hat, p):
 def coef_inference(X, y, beta_hat, sigma2):
     """Compute SE, t-stat, p-value and Confidence Intervals for coefficients."""
     X = np.asarray(X)
+    y = np.asarray(y)
     beta_hat = np.asarray(beta_hat)
+
+    if X.shape[0] != y.shape[0]:
+        raise ValueError(
+            f"Mismatch: X has {X.shape[0]} samples, y has {y.shape[0]} samples."
+        )
+
     n, p = X.shape
     df = n - p
 
-    # Ma trận hiệp biến: sigma2 * (X^T X)^-1
+    # Ma trận hiệp biến: sigma2 * (X^T X)^+
     xtx_inv = np.linalg.pinv(X.T @ X)
     cov_matrix = sigma2 * xtx_inv
 
@@ -85,14 +92,13 @@ def coef_inference(X, y, beta_hat, sigma2):
     # Tính p-values (Kiểm định 2 phía dùng hàm t.sf của scipy)
     p_values = 2 * stats.t.sf(np.abs(t_stats), df)
 
-    # Tính Khoảng tin cậy 95% (t_critical tại mức ý nghĩa 0.025 ở mỗi phía)
+    # Tính Khoảng tin cậy 95%
     t_crit = stats.t.ppf(0.975, df)
     ci_lower = beta_hat - t_crit * se
     ci_upper = beta_hat + t_crit * se
 
     return {
         "standard_errors": se,
-        # Trả về đồng thời cả 2 key để triệt tiêu hoàn toàn KeyError
         "t_statistics": t_stats,
         "t_stats": t_stats,
         "p_values": p_values,
