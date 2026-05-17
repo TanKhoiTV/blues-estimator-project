@@ -100,6 +100,7 @@ def coef_inference(X, y, beta_hat, sigma2):
         "ci_upper": ci_upper,
     }
 
+
 def vif(X):
     """Compute Variance Inflation Factor (VIF)."""
     pass
