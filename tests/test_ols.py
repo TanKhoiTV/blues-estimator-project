@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit
+from part1.ols_implementation import ols_fit, model_metrics
 
 
 class TestOLSFit:
@@ -84,3 +84,46 @@ class TestOLSFit:
         beta_hat, sigma2_hat = ols_fit(X, y)
 
         assert sigma2_hat == pytest.approx(noise_std**2, rel=0.5)
+
+
+class TestModelMetrics:
+    """Test suite for model_metrics function."""
+
+    def test_model_metrics_calculation(self):
+        """Test if metrics are calculated correctly with simple data."""
+        # Mock data setup
+        y = np.array([3, -0.5, 2, 7])
+        y_hat = np.array([2.5, 0.0, 2, 8])
+        p = 1
+
+        # Compute metrics
+        metrics = model_metrics(y, y_hat, p)
+
+        # Verify all expected keys are present
+        assert "RSS" in metrics
+        assert "TSS" in metrics
+        assert "R2" in metrics
+        assert "Adjusted_R2" in metrics
+        assert "F_statistic" in metrics
+
+        # Verify RSS calculation
+        # y - y_hat = [0.5, -0.5, 0, -1] -> squared = [0.25, 0.25, 0, 1] -> sum = 1.5
+        assert np.isclose(metrics["RSS"], 1.5)
+
+    def test_model_metrics_validation(self):
+        """Test if function correctly catches errors (different shapes or invalid degrees of freedom)."""
+        # Test shape mismatch
+        y = np.array([1, 2])
+        y_hat = np.array([1, 2, 3])
+        p = 1
+
+        with pytest.raises(ValueError):
+            model_metrics(y, y_hat, p)
+
+        # Test insufficient degrees of freedom (p + 1 >= n)
+        y_short = np.array([1, 2])
+        y_hat_short = np.array([1, 2])
+        p_large = 2
+
+        with pytest.raises(ValueError):
+            model_metrics(y_short, y_hat_short, p_large)

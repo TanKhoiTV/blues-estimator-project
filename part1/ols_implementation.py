@@ -67,8 +67,47 @@ def hat_matrix(X):
 
 
 def model_metrics(y, y_hat, p):
-    """Compute various metrics: MAE, RMSE, R-squared."""
-    pass
+    """
+    Compute statistical metrics for evaluating OLS model performance.
+    Metrics include: RSS, TSS, R-squared, Adjusted R-squared, and F-statistic.
+    """
+    y = np.asarray(y)
+    y_hat = np.asarray(y_hat)
+
+    # Validation to prevent runtime errors
+    if y.shape != y_hat.shape:
+        raise ValueError(
+            f"Shape mismatch: y {y.shape} and y_hat {y_hat.shape} must be identical."
+        )
+
+    n = len(y)
+
+    # Validation for degrees of freedom
+    if n <= p + 1:
+        raise ValueError(
+            f"Sample size n ({n}) must be strictly greater than p + 1 ({p + 1}) to compute Adjusted R^2 and F-stat."
+        )
+
+    # 1. Compute RSS and TSS
+    rss = np.sum((y - y_hat) ** 2)
+    tss = np.sum((y - np.mean(y)) ** 2)
+
+    # 2. Compute R-squared
+    r2 = 1 - (rss / tss)
+
+    # 3. Compute Adjusted R-squared
+    adj_r2 = 1 - ((n - 1) / (n - p - 1)) * (1 - r2)
+
+    # 4. Compute F-statistic
+    f_stat = ((tss - rss) / p) / (rss / (n - p - 1))
+
+    return {
+        "RSS": rss,
+        "TSS": tss,
+        "R2": r2,
+        "Adjusted_R2": adj_r2,
+        "F_statistic": f_stat,
+    }
 
 
 def coef_inference(X, y, beta_hat, sigma2):
