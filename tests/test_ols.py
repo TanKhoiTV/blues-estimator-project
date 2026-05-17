@@ -43,6 +43,7 @@ class TestOLSFit:
         np.testing.assert_array_almost_equal(beta_hat, beta_true, decimal=2)
 
     def test_residual_variance_estimate(self):
+        """Test that the residual variance estimator is reasonable with a tight tolerance."""
         np.random.seed(456)
         n_samples = 200
         n_features = 2
@@ -55,7 +56,9 @@ class TestOLSFit:
         y = X @ beta_true + epsilon
 
         beta_hat, sigma2_hat = ols_fit(X, y)
-        assert sigma2_hat == pytest.approx(noise_std**2, rel=0.5)
+
+        # Đfixed: Siết chặt độ lệch từ rel=0.5 xuống rel=0.2 theo đúng yêu cầu của CodeRabbit
+        assert sigma2_hat == pytest.approx(noise_std**2, rel=0.2)
 
 
 class TestModelMetrics:
@@ -95,7 +98,7 @@ class TestModelMetrics:
 
 
 class TestModelMetricsExpanded:
-    """Bộ test mở rộng từ Khôi - Đã được vá lỗi typo."""
+    """Bộ test mở rộng đáp ứng toàn bộ các tiêu chí nghiệm thu của Issue #25."""
 
     def setup_method(self):
         self.y_true = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -103,7 +106,6 @@ class TestModelMetricsExpanded:
         self.p = 2
 
     def test_perfect_fit(self):
-        # ĐÃ SỬA: Đổi tham số thứ hai thành self.y_true để test đúng tính chất perfect fit
         metrics = model_metrics(self.y_true, self.y_true, self.p)
         assert np.isclose(metrics["R2"], 1.0)
 
@@ -113,3 +115,14 @@ class TestModelMetricsExpanded:
         assert "F_stat" in metrics
         assert "MAE" in metrics
         assert "RMSE" in metrics
+
+    def test_adjusted_r2_penalty(self):
+        """BỔ SUNG THEO ISSUE #25: Xác thực Adjusted R2 sẽ giảm khi thêm biến vô tri."""
+        y = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y_hat = np.array([1.1, 1.9, 3.0, 4.2, 4.8])
+
+        metrics_p1 = model_metrics(y, y_hat, p=1)
+        metrics_p2 = model_metrics(y, y_hat, p=2)
+
+        assert metrics_p2["Adj_R2"] < metrics_p1["Adj_R2"]
+        assert metrics_p2["Adjusted_R2"] < metrics_p1["Adjusted_R2"]

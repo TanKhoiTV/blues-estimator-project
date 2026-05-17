@@ -97,7 +97,6 @@ def model_metrics(y, y_hat, p):
         r2 = 1 - (rss / tss)
         adj_r2 = 1 - ((n - 1) / (n - p - 1)) * (1 - r2)
 
-        # Chặn lỗi chia cho 0 khi dự báo khớp hoàn hảo (RSS = 0)
         if rss == 0:
             f_stat = float("inf") if (tss - rss) > 0 else 0.0
         else:
