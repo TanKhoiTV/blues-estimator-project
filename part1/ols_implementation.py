@@ -1,6 +1,7 @@
 """Module for OLS implementation, hat matrix, and statistical inference."""
 
 import numpy as np
+from scipy import stats
 
 
 def ols_fit(X, y):
@@ -111,8 +112,39 @@ def model_metrics(y, y_hat, p):
 
 
 def coef_inference(X, y, beta_hat, sigma2):
-    """Compute SE, t-stat, p-value and Confidence Intervals."""
-    pass
+    """Compute SE, t-stat, p-value and Confidence Intervals for coefficients.
+
+    Uses scipy.stats.t to derive p-values and 95% CI with n - p degrees of freedom.
+    """
+    X = np.asarray(X)
+    n, p_total = X.shape
+    df = n - p_total  # Bậc tự do (Degrees of freedom)
+
+    # 1. Compute covariance matrix of coefficients: Var(beta_hat) = sigma^2 * (X^T X)^-1
+    # Using pinv for numerical stability as requested
+    cov_matrix = sigma2 * np.linalg.pinv(X.T @ X)
+
+    # 2. Extract Standard Errors (SE) from the diagonal
+    se = np.sqrt(np.diag(cov_matrix))
+
+    # 3. Calculate t-statistics
+    t_stats = beta_hat / se
+
+    # 4. Calculate p-values (two-tailed test)
+    p_values = 2 * (1 - stats.t.cdf(np.abs(t_stats), df=df))
+
+    # 5. Calculate 95% Confidence Intervals
+    t_crit = stats.t.ppf(0.975, df=df)  # Giá trị t tới hạn ở mức ý nghĩa 5% (2 phía)
+    ci_lower = beta_hat - t_crit * se
+    ci_upper = beta_hat + t_crit * se
+
+    return {
+        "SE": se,
+        "t_stats": t_stats,
+        "p_values": p_values,
+        "CI_lower": ci_lower,
+        "CI_upper": ci_upper,
+    }
 
 
 def vif(X):

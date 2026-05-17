@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit, model_metrics
+from part1.ols_implementation import ols_fit, model_metrics, coef_inference
 
 
 class TestOLSFit:
@@ -127,3 +127,39 @@ class TestModelMetrics:
 
         with pytest.raises(ValueError):
             model_metrics(y_short, y_hat_short, p_large)
+
+
+class TestCoefInference:
+    """Test suite for coef_inference function."""
+
+    def test_coef_inference_calculation(self):
+        """Test inference calculations against known properties."""
+        np.random.seed(99)
+        # Tạo dữ liệu giả lập có độ nhiễu thấp để dễ kiểm tra
+        n, p = 50, 2
+        X = np.random.randn(n, p)
+        X[:, 0] = 1  # Intercept
+        beta_true = np.array([2.0, 5.0])
+        y = X @ beta_true + np.random.normal(0, 0.1, n)
+
+        # Tính toán lại beta_hat và sigma2 để nạp vào hàm
+        beta_hat, sigma2_hat = ols_fit(X, y)
+
+        # Gọi hàm kiểm tra
+        results = coef_inference(X, y, beta_hat, sigma2_hat)
+
+        assert "SE" in results
+        assert "t_stats" in results
+        assert "p_values" in results
+        assert "CI_lower" in results
+        assert "CI_upper" in results
+
+        # SE phải là số dương
+        assert np.all(results["SE"] > 0)
+
+        # CI lower phải nhỏ hơn CI upper
+        assert np.all(results["CI_lower"] < results["CI_upper"])
+
+        # Beta hat phải nằm giữa CI lower và CI upper
+        assert np.all(results["CI_lower"] <= beta_hat)
+        assert np.all(beta_hat <= results["CI_upper"])
