@@ -1,11 +1,10 @@
 """Module for OLS implementation, hat matrix, and statistical inference."""
 
 import numpy as np
-from scipy import stats
 
 
 def ols_fit(X, y):
-    """
+    r"""
     Compute OLS solution and Residual Variance Estimator.
 
     Formulas:
@@ -61,10 +60,7 @@ def hat_matrix(X):
 
 
 def model_metrics(y, y_hat, p):
-    """Compute statistical metrics for evaluating OLS model performance.
-
-    Metrics include: RSS, TSS, R-squared, Adjusted R-squared, and F-statistic.
-    """
+    """Compute statistical metrics for evaluating OLS model performance."""
     y = np.asarray(y)
     y_hat = np.asarray(y_hat)
 
@@ -103,33 +99,6 @@ def model_metrics(y, y_hat, p):
         "R2": r2,
         "Adjusted_R2": adj_r2,
         "F_statistic": f_stat,
-    }
-
-
-def coef_inference(X, y, beta_hat, sigma2):
-    """Compute SE, t-stat, p-value and Confidence Intervals for coefficients.
-
-    Uses scipy.stats.t to derive p-values and 95% CI with n - p degrees of freedom.
-    """
-    X = np.asarray(X)
-    n, p_total = X.shape
-    df = n - p_total
-
-    cov_matrix = sigma2 * np.linalg.pinv(X.T @ X)
-    se = np.sqrt(np.diag(cov_matrix))
-    t_stats = beta_hat / se
-    p_values = 2 * (1 - stats.t.cdf(np.abs(t_stats), df=df))
-
-    t_crit = stats.t.ppf(0.975, df=df)
-    ci_lower = beta_hat - t_crit * se
-    ci_upper = beta_hat + t_crit * se
-
-    return {
-        "SE": se,
-        "t_stats": t_stats,
-        "p_values": p_values,
-        "CI_lower": ci_lower,
-        "CI_upper": ci_upper,
     }
 
 
