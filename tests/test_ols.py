@@ -4,10 +4,9 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit, model_metrics
+from part1.ols_implementation import ols_fit, model_metrics, coef_inference, vif
 
 
 class TestOLSFit:
@@ -27,7 +26,7 @@ class TestOLSFit:
         beta_true = np.array([2.5, 1.0, -0.8])
         noise_std = 0.1
 
-        # Generate design matrx
+        # Generate design matrix
         X = np.random.randn(n_samples, n_features)
         X[:, 0] = 1  # Intercept col
 
@@ -39,7 +38,6 @@ class TestOLSFit:
         beta_hat, sigma2_hat = ols_fit(X, y)
 
         # Assert estimated β is close to true β
-        # Reasonable tolerance with noise std=0.1 and n=100
         np.testing.assert_array_almost_equal(beta_hat, beta_true, decimal=1)
 
     def test_larger_sample_size(self):
@@ -107,7 +105,6 @@ class TestModelMetrics:
         assert "F_statistic" in metrics
 
         # Verify RSS calculation
-        # y - y_hat = [0.5, -0.5, 0, -1] -> squared = [0.25, 0.25, 0, 1] -> sum = 1.5
         assert np.isclose(metrics["RSS"], 1.5)
 
     def test_model_metrics_validation(self):
@@ -127,3 +124,56 @@ class TestModelMetrics:
 
         with pytest.raises(ValueError):
             model_metrics(y_short, y_hat_short, p_large)
+
+
+class TestCoefInference:
+    """Test suite for coef_inference function."""
+
+    def test_coef_inference_calculation(self):
+        """Test coefficients statistical inference calculations (SE, t-stat, p-value, CI)."""
+        np.random.seed(99)
+        n, p = 50, 2
+        X = np.random.randn(n, p)
+        X[:, 0] = 1
+        beta_true = np.array([2.0, 5.0])
+        y = X @ beta_true + np.random.normal(0, 0.1, n)
+
+        beta_hat, sigma2_hat = ols_fit(X, y)
+        results = coef_inference(X, y, beta_hat, sigma2_hat)
+
+        assert "SE" in results
+        assert "t_stats" in results
+        assert "p_values" in results
+        assert "CI_lower" in results
+        assert "CI_upper" in results
+        assert np.all(results["SE"] > 0)
+        assert np.all(results["CI_lower"] < results["CI_upper"])
+        assert np.all(results["CI_lower"] <= beta_hat)
+        assert np.all(beta_hat <= results["CI_upper"])
+
+
+class TestVIF:
+    """Test suite for vif function."""
+
+    def test_vif_calculation(self):
+        """Test VIF calculation with known collinearity properties."""
+        np.random.seed(42)
+        # n=100, p=3 (intercept + 2 features)
+        X = np.random.rand(100, 3)
+        X[:, 0] = 1.0
+
+        # Independent features -> VIF should be close to 1
+        vif_independent = vif(X)
+        assert len(vif_independent) == 2
+        assert np.allclose(vif_independent, [1.0, 1.0], atol=0.2)
+
+        # Highly correlated features -> VIF should be high (> 10)
+        X[:, 2] = X[:, 1] * 3.0 + np.random.normal(0, 0.01, 100)
+        vif_correlated = vif(X)
+        assert np.all(vif_correlated > 10.0)
+
+    def test_vif_validation(self):
+        """Test edge cases for VIF (e.g., matrix with only intercept)."""
+        X_single = np.ones((10, 1))
+        with pytest.raises(ValueError):
+            vif(X_single)

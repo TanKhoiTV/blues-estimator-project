@@ -5,7 +5,7 @@ from scipy import stats
 
 
 def ols_fit(X, y):
-    """
+    r"""
     Compute OLS solution and Residual Variance Estimator.
 
     Formulas:
@@ -134,5 +134,46 @@ def coef_inference(X, y, beta_hat, sigma2):
 
 
 def vif(X):
-    """Compute Variance Inflation Factor (VIF)."""
-    pass
+    """Compute Variance Inflation Factor (VIF) for each feature.
+
+    Returns an array of VIF values for each column in X (excluding the intercept).
+    """
+    X = np.asarray(X)
+    n, p = X.shape
+
+    if p < 2:
+        raise ValueError(
+            "X must have at least two columns (intercept and one feature) to compute VIF."
+        )
+
+    vif_values = []
+
+    # Lặp qua từng cột đặc trưng (bỏ qua cột 0 là intercept)
+    for j in range(1, p):
+        y_j = X[:, j]
+        # X_j là ma trận X sau khi đã loại bỏ cột j
+        X_j = np.delete(X, j, axis=1)
+
+        # Hồi quy OLS: y_j theo X_j (Dùng pseudo-inverse cho lẹ và ổn định)
+        xtx_inv = np.linalg.pinv(X_j.T @ X_j)
+        beta_j = xtx_inv @ X_j.T @ y_j
+        y_j_hat = X_j @ beta_j
+
+        # Tính R^2_j
+        rss = np.sum((y_j - y_j_hat) ** 2)
+        tss = np.sum((y_j - np.mean(y_j)) ** 2)
+
+        if tss == 0:
+            # Nếu cột này là hằng số, VIF coi như = 1
+            vif_values.append(1.0)
+            continue
+
+        r2_j = 1.0 - (rss / tss)
+
+        # Tính VIF và chặn lỗi chia cho 0 nếu R^2_j = 1 (đa cộng tuyến hoàn hảo)
+        if np.isclose(r2_j, 1.0):
+            vif_values.append(float("inf"))
+        else:
+            vif_values.append(1.0 / (1.0 - r2_j))
+
+    return np.array(vif_values)
