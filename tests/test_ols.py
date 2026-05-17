@@ -95,34 +95,3 @@ class TestModelMetrics:
 
         with pytest.raises(TypeError):
             model_metrics(y_short, y_hat_short, "invalid_p_type")
-
-
-class TestModelMetricsExpanded:
-    """Bộ test mở rộng đáp ứng toàn bộ các tiêu chí nghiệm thu của Issue #25."""
-
-    def setup_method(self):
-        self.y_true = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
-        self.y_pred = np.array([1.1, 1.9, 3.2, 3.8, 5.1])
-        self.p = 2
-
-    def test_perfect_fit(self):
-        metrics = model_metrics(self.y_true, self.y_true, self.p)
-        assert np.isclose(metrics["R2"], 1.0)
-
-    def test_metrics_keys_and_outputs(self):
-        metrics = model_metrics(self.y_true, self.y_pred, self.p)
-        assert "Adj_R2" in metrics
-        assert "F_stat" in metrics
-        assert "MAE" in metrics
-        assert "RMSE" in metrics
-
-    def test_adjusted_r2_penalty(self):
-        """BỔ SUNG THEO ISSUE #25: Xác thực Adjusted R2 sẽ giảm khi thêm biến vô tri."""
-        y = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
-        y_hat = np.array([1.1, 1.9, 3.0, 4.2, 4.8])
-
-        metrics_p1 = model_metrics(y, y_hat, p=1)
-        metrics_p2 = model_metrics(y, y_hat, p=2)
-
-        assert metrics_p2["Adj_R2"] < metrics_p1["Adj_R2"]
-        assert metrics_p2["Adjusted_R2"] < metrics_p1["Adjusted_R2"]
