@@ -79,6 +79,14 @@ def coef_inference(X, y, beta_hat, sigma2):
 def vif(X):
     """Compute Variance Inflation Factor (VIF) for each feature matching statsmodels."""
     X = np.asarray(X)
+
+    # --- ĐÃ THÊM: Kiểm tra mảng rỗng và số chiều TRƯỚC KHI unpack ---
+    if X.size == 0:
+        raise ValueError("Input matrix X cannot be empty.")
+    if X.ndim != 2:
+        raise ValueError(f"X must be a 2D array, but got {X.ndim}D.")
+    # --------------------------------------------------------------
+
     n, p = X.shape
 
     if p < 1:
