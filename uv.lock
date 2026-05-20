@@ -194,8 +194,6 @@ dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pytest" },
-    { name = "scikit-learn" },
     { name = "scipy" },
     { name = "seaborn" },
 ]
@@ -217,8 +215,6 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10.9" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "pandas", specifier = ">=3.0.2" },
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
 ]
