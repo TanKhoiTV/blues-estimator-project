@@ -10,7 +10,6 @@ from part1.ols_implementation import coef_inference
 
 
 class TestCoefInferenceExpanded:
-
     def setup_method(self):
         # Thiết lập ma trận mẫu chuẩn
         self.X = np.array([[1, 2], [1, 3], [1, 4], [1, 5], [1, 6]])
