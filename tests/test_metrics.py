@@ -5,7 +5,6 @@ from pathlib import Path
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.ols_implementation import model_metrics
@@ -24,7 +23,7 @@ class TestModelMetrics:
 
     def test_perfect_fit(self):
         """Test metrics when predictions match ground truth exactly."""
-        # ĐÃ SỬA LỖI CỦA PI: Truyền y_true vào cả 2 vị trí để giả lập mô hình dự đoán đúng 100%
+        # ĐÃ FIX: Đổi self.y_pred thành self.y_true để RSS thực sự bằng 0
         metrics = model_metrics(self.y_true, self.y_true, self.p)
 
         assert metrics["RSS"] == pytest.approx(0.0, abs=1e-10)
