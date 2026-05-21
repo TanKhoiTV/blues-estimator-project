@@ -49,6 +49,21 @@ class TestDataPipeline(unittest.TestCase):
             list(X_train_transformed.columns), list(X_test_transformed.columns)
         )
 
+    def test_missing_categorical_uses_training_mode(self):
+        """Categorical imputation should use the mode learned during fit."""
+        self.pipeline.fit(self.df_train)
+
+        df_test = pd.DataFrame(
+            {
+                "numeric_feature": [40, 50, 60],
+                "cat_feature": [None, "B", "B"],
+            }
+        )
+
+        filled = self.pipeline.handle_missing_values(df_test)
+
+        self.assertEqual(filled["cat_feature"].iloc[0], "A")
+
 
 if __name__ == "__main__":
     unittest.main()

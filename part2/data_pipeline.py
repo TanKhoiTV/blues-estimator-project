@@ -28,6 +28,7 @@ class DataPipeline:
 
         # Store categorical mappings
         self.categorical_values_ = {}
+        self.categorical_modes_ = {}
 
         # Store column types
         self.numeric_columns_ = []
@@ -107,6 +108,8 @@ class DataPipeline:
         # Learn categorical mappings
         for col in self.categorical_columns_:
             self.categorical_values_[col] = X[col].dropna().unique().tolist()
+            mode = X[col].mode(dropna=True)
+            self.categorical_modes_[col] = None if mode.empty else mode[0]
 
     def handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -130,10 +133,7 @@ class DataPipeline:
 
         # Categorical columns -> mode imputation
         for col in self.categorical_columns_:
-
-            if not df[col].mode().empty:
-                mode_value = df[col].mode()[0]
-                df[col] = df[col].fillna(mode_value)
+            df[col] = df[col].fillna(self.categorical_modes_[col])
 
         return df
 
