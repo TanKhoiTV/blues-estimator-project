@@ -5,7 +5,7 @@ from scipy import stats
 
 
 def ols_fit(X, y):
-    r"""
+    """
     Compute OLS solution and Residual Variance Estimator.
 
     An intercept column is prepended internally. Do NOT include one in X.
