@@ -179,5 +179,58 @@ def coef_inference(X, y, beta_hat, sigma2):
 
 
 def vif(X):
-    """Compute Variance Inflation Factor (VIF)."""
-    pass
+    """Compute Variance Inflation Factor (VIF) for each feature matching statsmodels."""
+    X = np.asarray(X)
+
+    if X.size == 0:
+        raise ValueError("Input matrix X cannot be empty.")
+    if X.ndim != 2:
+        raise ValueError(f"X must be a 2D array, but got {X.ndim}D.")
+
+    n, p = X.shape
+
+    if p < 1:
+        raise ValueError("X must have at least one column to compute VIF.")
+
+    vif_values = []
+
+    for j in range(p):
+        y_j = X[:, j]
+        X_j = np.delete(X, j, axis=1)
+
+        if X_j.shape[1] == 0:
+            vif_values.append(1.0)
+            continue
+
+        # sử dụng lstsq (SVD) thay vì pinv để đạt độ chính xác số học tuyệt đối như statsmodels
+        beta_j, _, _, _ = np.linalg.lstsq(X_j, y_j, rcond=None)
+        y_j_hat = X_j @ beta_j
+
+        rss = np.sum((y_j - y_j_hat) ** 2)
+
+        # kiểm tra xem ma trận con X_j có chứa cột hằng số (intercept) không
+        has_constant = False
+        for col_idx in range(X_j.shape[1]):
+            if np.allclose(X_j[:, col_idx], X_j[0, col_idx]):
+                has_constant = True
+                break
+
+        # nếu có hằng số dùng Centered TSS
+        # nếu không có hằng số bắt buộc dùng Uncentered TSS
+        if has_constant:
+            tss = np.sum((y_j - np.mean(y_j)) ** 2)
+        else:
+            tss = np.sum(y_j**2)
+
+        if tss == 0:
+            vif_values.append(1.0)
+            continue
+
+        r2_j = 1.0 - (rss / tss)
+
+        if r2_j >= 1.0 or np.isclose(r2_j, 1.0):
+            vif_values.append(float("inf"))
+        else:
+            vif_values.append(1.0 / (1.0 - r2_j))
+
+    return np.array(vif_values)
