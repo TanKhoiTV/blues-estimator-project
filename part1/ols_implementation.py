@@ -59,7 +59,7 @@ def ols_fit(X, y):
     y_hat = X @ beta_hat
     rss = np.sum((y - y_hat) ** 2)
 
-    sigma2 = rss / (n - p)
+    sigma2 = rss / (n - p - 1)
 
     return beta_hat, sigma2
 
