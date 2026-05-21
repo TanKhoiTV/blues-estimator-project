@@ -23,17 +23,17 @@ class TestOLSFit:
 
         # Define controlled parameters
         n_samples = 100
-        n_features = 3
-        beta_true = np.array([2.5, 1.0, -0.8])
+        n_features = 3 # intercept not included
+        beta_true = np.array([1.5, 2.5, 1.0, -0.8]) # beta thực tế bao gồm cả intercept ở vị trí đầu tiên
         noise_std = 0.1
 
         # Generate design matrx
         X = np.random.randn(n_samples, n_features)
-        X[:, 0] = 1  # Intercept col
 
         # Generate y = Xβ + ε
+        X_aug = np.column_stack([np.ones(n_samples), X]) # matches internal logic of ols_fit
         epsilon = np.random.normal(loc=0, scale=noise_std, size=n_samples)
-        y = X @ beta_true + epsilon
+        y = X_aug @ beta_true + epsilon
 
         # Fit OLS
         beta_hat, sigma2_hat = ols_fit(X, y)
@@ -52,14 +52,14 @@ class TestOLSFit:
         # Larger dataset for tighter parameter recovery
         n_samples = 500
         n_features = 4
-        beta_true = np.array([3.0, -1.5, 2.0, 0.5])
+        beta_true = np.array([0.5, 3.0, -1.5, 2.0, 0.5])
         noise_std = 0.1
 
         # Generate data
         X = np.random.randn(n_samples, n_features)
-        X[:, 0] = 1
+        X_aug = np.column_stack([np.ones(n_samples), X])
         epsilon = np.random.normal(loc=0, scale=noise_std, size=n_samples)
-        y = X @ beta_true + epsilon
+        y = X_aug @ beta_true + epsilon
 
         # Fit OLS
         beta_hat, sigma2_hat = ols_fit(X, y)
@@ -73,14 +73,17 @@ class TestOLSFit:
 
         n_samples = 200
         n_features = 2
-        beta_true = np.array([1.0, 2.0])
+        beta_true = np.array([2.0, 1.0, 2.0])
         noise_std = 0.1
 
         X = np.random.randn(n_samples, n_features)
-        X[:, 0] = 1
+        X_aug = np.column_stack([np.ones(n_samples), X])
         epsilon = np.random.normal(loc=0, scale=noise_std, size=n_samples)
-        y = X @ beta_true + epsilon
+        y = X_aug @ beta_true + epsilon
 
         beta_hat, sigma2_hat = ols_fit(X, y)
+        n, p = X.shape
 
-        assert sigma2_hat == pytest.approx(noise_std**2, rel=0.5)
+        rss = np.sum((y - (X_aug @ beta_hat)) ** 2)
+        sigma2_expected = rss / (n - p - 1)
+        assert sigma2_hat == pytest.approx(sigma2_expected, rel=1e-6)
