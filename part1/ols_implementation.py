@@ -182,12 +182,10 @@ def vif(X):
     """Compute Variance Inflation Factor (VIF) for each feature matching statsmodels."""
     X = np.asarray(X)
 
-    # --- ĐÃ THÊM: Kiểm tra mảng rỗng và số chiều TRƯỚC KHI unpack ---
     if X.size == 0:
         raise ValueError("Input matrix X cannot be empty.")
     if X.ndim != 2:
         raise ValueError(f"X must be a 2D array, but got {X.ndim}D.")
-    # --------------------------------------------------------------
 
     n, p = X.shape
 
@@ -204,20 +202,21 @@ def vif(X):
             vif_values.append(1.0)
             continue
 
-        # Sử dụng lstsq (SVD) thay vì pinv để đạt độ chính xác số học tuyệt đối như statsmodels
+        # sử dụng lstsq (SVD) thay vì pinv để đạt độ chính xác số học tuyệt đối như statsmodels
         beta_j, _, _, _ = np.linalg.lstsq(X_j, y_j, rcond=None)
         y_j_hat = X_j @ beta_j
 
         rss = np.sum((y_j - y_j_hat) ** 2)
 
-        # THUẬT TOÁN ĐỈNH CAO: Tự động kiểm tra xem ma trận con X_j có chứa cột hằng số (intercept) không
+        # kiểm tra xem ma trận con X_j có chứa cột hằng số (intercept) không
         has_constant = False
         for col_idx in range(X_j.shape[1]):
             if np.allclose(X_j[:, col_idx], X_j[0, col_idx]):
                 has_constant = True
                 break
 
-        # Nếu có hằng số dùng Centered TSS, nếu không có hằng số bắt buộc dùng Uncentered TSS
+        # nếu có hằng số dùng Centered TSS
+        # nếu không có hằng số bắt buộc dùng Uncentered TSS
         if has_constant:
             tss = np.sum((y_j - np.mean(y_j)) ** 2)
         else:
