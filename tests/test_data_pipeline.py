@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 import unittest
 import pandas as pd
 from part2.data_pipeline import DataPipeline
