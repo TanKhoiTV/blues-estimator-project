@@ -138,7 +138,7 @@ def model_metrics(y, y_hat, p):
 
 def coef_inference(X, y, beta_hat, sigma2):
     """Compute SE, t-stat, p-value and Confidence Intervals for coefficients.
-    
+
     Parameters
     ----------
     X : array-like of shape (n, p)
