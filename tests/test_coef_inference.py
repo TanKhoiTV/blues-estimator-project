@@ -22,17 +22,19 @@ class TestCoefInference:
         self.n_features = 3
 
         # Design matrix with intercept
-        self.X = np.random.randn(self.n_samples, self.n_features)
-        self.X[:, 0] = 1
+        X_raw = np.random.randn(self.n_samples, self.n_features - 1)
 
         # Known coefficients: Beta1 is significant, Beta2 is nearly zero (insignificant)
         self.beta_true = np.array([10.0, 5.0, 0.01])
         self.noise_std = 0.5
+        X_full = np.column_stack([np.ones(self.n_samples), X_raw])
         epsilon = np.random.normal(0, self.noise_std, self.n_samples)
-        self.y = self.X @ self.beta_true + epsilon
+        self.y = X_full @ self.beta_true + epsilon
 
         # Fit initial model to get prerequisites
-        self.beta_hat, self.sigma2_hat = ols_fit(self.X, self.y)
+        self.beta_hat, self.sigma2_hat = ols_fit(X_raw, self.y)
+
+        self.X = X_full
 
     def test_standard_error_calculation(self):
         """Verify Standard Errors (SE) match theoretical expectations.
