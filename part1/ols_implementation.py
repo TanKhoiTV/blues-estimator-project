@@ -137,7 +137,14 @@ def model_metrics(y, y_hat, p):
 
 
 def coef_inference(X, y, beta_hat, sigma2):
-    """Compute SE, t-stat, p-value and Confidence Intervals for coefficients."""
+    """Compute SE, t-stat, p-value and Confidence Intervals for coefficients.
+    
+    Parameters
+    ----------
+    X : array-like of shape (n, p)
+        Design matrix **including** the intercept column (i.e. the augmented
+        matrix, not the raw predictor matrix passed to ``ols_fit``).
+    """
     X = np.asarray(X)
     beta_hat = np.asarray(beta_hat)
 
