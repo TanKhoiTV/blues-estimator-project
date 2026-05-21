@@ -8,12 +8,29 @@ def ols_fit(X, y):
     r"""
     Compute OLS solution and Residual Variance Estimator.
 
+    An intercept column is prepended internally. Do NOT include one in X.
+
+    Parameters
+    ----------
+    X: array-like of shape (n, p)
+       Design matrix of predictors, without intercept column.
+    y: array-like of shape (n, )
+       Response vector.
+
+    Returns
+    -------
+    beta_hat: ndarray of shape (p + 1, )
+        Estimated coefficients, where beta_hat[0] is the intercept.
+    sigma2: float
+        Residual variance estimate.
+
     Formulas:
-    - beta_hat: $\hat{\beta} = (X^T X)^{-1} X^T y$
-    - sigma2: $\hat{\sigma}^2 = \frac{RSS}{n - p}$
+    - beta_hat: $\\hat{\\beta} = (X^T X)^{-1} X^T y$
+    - sigma2: $\\hat{\\sigma}^2 = \\frac{RSS}{n - p - 1}$
+      where p is the number of predictors (excluding intercept).
     """
-    X = np.array(X)
-    y = np.array(y)
+    X = np.array(X, dtype=float)
+    y = np.array(y, dtype=float)
 
     if X.size == 0 or y.size == 0:
         raise ValueError("Input matrices X and y cannot be empty.")
@@ -28,7 +45,10 @@ def ols_fit(X, y):
     if n != y.shape[0]:
         raise ValueError(f"Mismatch: X has {n} samples, y has {y.shape[0]} samples.")
 
-    if n - p <= 0:
+    X = np.column_stack([np.ones(n), X])
+
+    # 3. Chặn lỗi chia cho 0 (Guard residual DoF)
+    if n - p - 1 <= 0:
         raise ValueError(
             f"Not enough samples to compute variance. n ({n}) must be strictly greater than p ({p})."
         )
@@ -62,7 +82,58 @@ def hat_matrix(X):
 
 def model_metrics(y, y_hat, p):
     """Compute statistical metrics for evaluating OLS model performance."""
-    pass
+    if not isinstance(p, (int, np.integer)):
+        raise TypeError("p must be an integer representing the number of features.")
+    if p <= 0:
+        raise ValueError(
+            "p must be a strictly positive integer to compute F-statistic."
+        )
+
+    y = np.asarray(y)
+    y_hat = np.asarray(y_hat)
+
+    if y.shape != y_hat.shape:
+        raise ValueError(
+            f"Shape mismatch: y {y.shape} and y_hat {y_hat.shape} must be identical."
+        )
+
+    n = len(y)
+
+    if n <= p + 1:
+        raise ValueError(
+            f"Sample size n ({n}) must be strictly greater than p + 1 ({p + 1}) to compute Adjusted R^2 and F-stat."
+        )
+
+    rss = np.sum((y - y_hat) ** 2)
+    tss = np.sum((y - np.mean(y)) ** 2)
+
+    mae = np.mean(np.abs(y - y_hat))
+    rmse = np.sqrt(rss / n)
+
+    if tss == 0:
+        r2 = 1.0 if rss == 0 else 0.0
+        adj_r2 = r2
+        f_stat = float("nan")
+    else:
+        r2 = 1 - (rss / tss)
+        adj_r2 = 1 - ((n - 1) / (n - p - 1)) * (1 - r2)
+
+        if rss == 0:
+            f_stat = float("inf") if (tss - rss) > 0 else 0.0
+        else:
+            f_stat = ((tss - rss) / p) / (rss / (n - p - 1))
+
+    return {
+        "RSS": rss,
+        "TSS": tss,
+        "R2": r2,
+        "Adjusted_R2": adj_r2,
+        "Adj_R2": adj_r2,
+        "F_statistic": f_stat,
+        "F_stat": f_stat,
+        "MAE": mae,
+        "RMSE": rmse,
+    }
 
 
 def coef_inference(X, y, beta_hat, sigma2):
