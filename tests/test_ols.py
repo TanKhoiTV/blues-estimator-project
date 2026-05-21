@@ -24,15 +24,19 @@ class TestOLSFit:
 
         # Define controlled parameters
         n_samples = 100
-        n_features = 3 # intercept not included
-        beta_true = np.array([1.5, 2.5, 1.0, -0.8]) # beta thực tế bao gồm cả intercept ở vị trí đầu tiên
+        n_features = 3  # intercept not included
+        beta_true = np.array(
+            [1.5, 2.5, 1.0, -0.8]
+        )  # beta thực tế bao gồm cả intercept ở vị trí đầu tiên
         noise_std = 0.1
 
         # Generate design matrx
         X = np.random.randn(n_samples, n_features)
 
         # Generate y = Xβ + ε
-        X_aug = np.column_stack([np.ones(n_samples), X]) # matches internal logic of ols_fit
+        X_aug = np.column_stack(
+            [np.ones(n_samples), X]
+        )  # matches internal logic of ols_fit
         epsilon = np.random.normal(loc=0, scale=noise_std, size=n_samples)
         y = X_aug @ beta_true + epsilon
 
@@ -91,14 +95,12 @@ class TestOLSFit:
 
     def test_metrics_numerical_correctness(self):
         """Verify TSS, R-squared, Adjusted R-squared, and F-statistic values analytically."""
-
         # Waiting for model_metrics to be review and merged
 
         pass
 
     def test_sklearn_parity(self):
         """Verify parity with scikit-learn OLS implementation at epsilon = 1e-6."""
-
         np.random.seed(789)
 
         n_samples = 80
@@ -127,29 +129,25 @@ class TestOLSFit:
 
         np.testing.assert_allclose(beta_hat, beta_sklearn, rtol=1e-6, atol=1e-6)
         assert sigma2_hat == pytest.approx(sigma2_sklearn, abs=1e-6)
-    
+
     def test_dof_edge_case_exact_boundary(self):
-        """Test the exact boundary where n = p + 1. 
-        
-        Residual Degrees of Freedom (n - p - 1) equals 0. 
+        """Test the exact boundary where n = p + 1.
+
+        Residual Degrees of Freedom (n - p - 1) equals 0.
         The model perfectly interpolates points; RSS is 0, but variance is undefined (0/0).
         """
-
         # 2 samples, 1 predictor => n = 2, p = 1. DoF: 2 - 1 - 1 = 0
-        X = np.array([[1.0], 
-                      [2.0]])
+        X = np.array([[1.0], [2.0]])
         y = np.array([3.0, 5.0])
-        
+
         with pytest.raises(ValueError, match="Not enough samples to compute variance"):
             ols_fit(X, y)
 
     def test_dof_edge_case_insufficient_samples(self):
         """Test extreme case where n < p + 1 (Overparameterized system)."""
-
         # 2 samples but with 3 predictors => System has infinite solutions, not enough DoF
-        X = np.array([[1.0, 2.0, 3.0], 
-                      [4.0, 5.0, 6.0]])
+        X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         y = np.array([1.0, 2.0])
-        
+
         with pytest.raises(ValueError, match="Not enough samples to compute variance"):
             ols_fit(X, y)
