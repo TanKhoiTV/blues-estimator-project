@@ -5,6 +5,7 @@ from pathlib import Path
 from scipy import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.ols_implementation import coef_inference, ols_fit
@@ -34,10 +35,14 @@ class TestCoefInference:
         self.beta_hat, self.sigma2_hat = ols_fit(self.X, self.y)
 
     def test_standard_error_calculation(self):
-        """Verify Standard Errors (SE) match theoretical expectations."""
-        # CHỈ TRUYỀN 3 THAM SỐ
-        results = coef_inference(self.X, self.beta_hat, self.sigma2_hat)
-        se = results["standard_errors"]
+        """Verify Standard Errors (SE) match theoretical expectations.
+
+        SE(beta_j) = sqrt(sigma2 * [ (X^T X)^-1 ]_jj)
+        """
+        inference_results = coef_inference(
+            self.X, self.y, self.beta_hat, self.sigma2_hat
+        )
+        se = inference_results["standard_errors"]
 
         # Manual calculation for verification
         xtx_inv = np.linalg.pinv(self.X.T @ self.X)
@@ -47,18 +52,21 @@ class TestCoefInference:
 
     def test_t_statistics_logic(self):
         """Verify t-statistics are calculated as beta_hat / SE."""
-        # CHỈ TRUYỀN 3 THAM SỐ
-        results = coef_inference(self.X, self.beta_hat, self.sigma2_hat)
+        results = coef_inference(self.X, self.y, self.beta_hat, self.sigma2_hat)
 
         expected_t = self.beta_hat / results["standard_errors"]
+        # ĐÃ SỬA LỖI TẠI ĐÂY: t_stats -> t_statistics
         np.testing.assert_array_almost_equal(
             results["t_statistics"], expected_t, decimal=10
         )
 
     def test_p_value_significance(self):
-        """Verify that significant variables have low p-values."""
-        # CHỈ TRUYỀN 3 THAM SỐ
-        results = coef_inference(self.X, self.beta_hat, self.sigma2_hat)
+        """Verify that significant variables have low p-values.
+
+        Beta[1] = 5.0 (High significance) should have p < 0.05.
+        Beta[2] = 0.01 (Low significance) should likely have p > 0.05.
+        """
+        results = coef_inference(self.X, self.y, self.beta_hat, self.sigma2_hat)
         p_values = results["p_values"]
 
         assert p_values[1] < 0.01  # Strongly significant
@@ -66,8 +74,7 @@ class TestCoefInference:
 
     def test_confidence_intervals_95(self):
         """Verify the 95% Confidence Intervals (CI) are symmetric and properly scaled."""
-        # CHỈ TRUYỀN 3 THAM SỐ
-        results = coef_inference(self.X, self.beta_hat, self.sigma2_hat)
+        results = coef_inference(self.X, self.y, self.beta_hat, self.sigma2_hat)
         ci_lower = results["ci_lower"]
         ci_upper = results["ci_upper"]
 
@@ -89,5 +96,4 @@ class TestCoefInference:
         wrong_beta = np.array([1.0, 2.0])  # Needs 3
 
         with pytest.raises(ValueError):
-            # CHỈ TRUYỀN 3 THAM SỐ
-            coef_inference(self.X, wrong_beta, self.sigma2_hat)
+            coef_inference(self.X, self.y, wrong_beta, self.sigma2_hat)

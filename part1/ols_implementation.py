@@ -65,19 +65,24 @@ def model_metrics(y, y_hat, p):
     pass
 
 
-def coef_inference(X, beta_hat, sigma2):  # ĐÃ XÓA PARAMETER y
+def coef_inference(X, y, beta_hat, sigma2):
     """Compute SE, t-stat, p-value and Confidence Intervals for coefficients."""
     X = np.asarray(X)
     beta_hat = np.asarray(beta_hat)
 
     n, p = X.shape
+
+    # Bẫy lỗi để pass bài test: test_dimension_mismatch
+    if beta_hat.shape[0] != p:
+        raise ValueError(
+            f"Dimension mismatch: X has {p} columns but beta_hat has {beta_hat.shape[0]} elements."
+        )
+
     df = n - p
 
-    # Ma trận hiệp biến: sigma2 * (X^T X)^+
     xtx_inv = np.linalg.pinv(X.T @ X)
     cov_matrix = sigma2 * xtx_inv
 
-    # Tính Standard Errors
     se = np.sqrt(np.maximum(0, np.diag(cov_matrix)))
     t_stats = np.where(se > 0, beta_hat / se, 0.0)
     p_values = 2 * stats.t.sf(np.abs(t_stats), df)
@@ -89,13 +94,9 @@ def coef_inference(X, beta_hat, sigma2):  # ĐÃ XÓA PARAMETER y
     return {
         "standard_errors": se,
         "t_statistics": t_stats,
-        "t_stats": t_stats,
         "p_values": p_values,
         "ci_lower": ci_lower,
         "ci_upper": ci_upper,
-        "SE": se,
-        "CI_lower": ci_lower,
-        "CI_upper": ci_upper,
     }
 
 
