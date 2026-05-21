@@ -7,12 +7,29 @@ def ols_fit(X, y):
     """
     Compute OLS solution and Residual Variance Estimator.
 
+    An intercept column is prepended internally. Do NOT include one in X.
+
+    Parameters
+    ----------
+    X: array-like of shape (n, p)
+       Design matrix of predictors, without intercept column.
+    y: array-like of shape (n, )
+       Response vector.
+
+    Returns
+    -------
+    beta_hat: ndarray of shape (p + 1, )
+        Estimated coefficients, where beta_hat[0] is the intercept.
+    sigma2: float
+        Residual variance estimate.
+
     Formulas:
     - beta_hat: $\\hat{\\beta} = (X^T X)^{-1} X^T y$
     - sigma2: $\\hat{\\sigma}^2 = \\frac{RSS}{n - p - 1}$
+      where p is the number of predictors (excluding intercept).
     """
-    X = np.array(X)
-    y = np.array(y)
+    X = np.array(X, dtype=float)
+    y = np.array(y, dtype=float)
 
     # 1. Kiểm tra mảng rỗng
     if X.size == 0 or y.size == 0:
@@ -29,6 +46,8 @@ def ols_fit(X, y):
     # Kiểm tra tính tương thích giữa X và y
     if n != y.shape[0]:
         raise ValueError(f"Mismatch: X has {n} samples, y has {y.shape[0]} samples.")
+
+    X = np.column_stack([np.ones(n), X])
 
     # 3. Chặn lỗi chia cho 0 (Guard residual DoF)
     if n - p - 1 <= 0:
