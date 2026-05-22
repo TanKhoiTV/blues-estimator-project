@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
 
 import unittest
 import pandas as pd
@@ -63,7 +64,3 @@ class TestDataPipeline(unittest.TestCase):
         filled = self.pipeline.handle_missing_values(df_test)
 
         self.assertEqual(filled["cat_feature"].iloc[0], "A")
-
-
-if __name__ == "__main__":
-    unittest.main()
