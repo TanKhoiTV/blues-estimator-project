@@ -14,8 +14,8 @@ def kfold_cv(X, y, k=5, random_state=None):
         k (int): Number of folds. Default is 5.
         random_state (int, optional): Seed for random shuffling. Default is None.
 
-    Returns:
-        -------
+    Returns
+    -------
         tuple: (Array of MSE for each fold, Mean CV Score)
     """
     X = np.asarray(X)
