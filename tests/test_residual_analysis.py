@@ -146,3 +146,79 @@ class TestResidualAnalysis:
         assert np.all(cooks_d_actual >= 0.0)
 
         plt.close(fig)
+
+    def test_perfect_fit_does_not_crash(self):
+        """Test that a perfect fit model does not crash the function.
+
+        When y equals X @ beta_hat exactly (zero noise), MSE equals zero,
+        which risks division by zero when computing standardized residuals.
+        The function must handle this edge case gracefully without raising any exception.
+        """
+        np.random.seed(0)
+        n = 20
+        X = np.column_stack([np.ones(n), np.random.randn(n, 2)])
+        beta_hat = np.array([1.0, 2.0, -1.0])
+        y = X @ beta_hat  # perfect fit, no noise
+
+        try:
+            fig = residual_plots(X, y, beta_hat)
+            plt.close(fig)
+        except Exception as e:
+            pytest.fail(
+                f"residual_plots raised an unexpected exception on perfect fit: {e}"
+            )
+
+    def test_cooks_distance_threshold_line_at_4_over_n(self):
+        """Verify that Plot 4 draws the Cook's Distance threshold line at 4/n.
+
+        This rule-of-thumb cutoff is the standard visual reference for identifying
+        influential observations and must be rendered at the correct position.
+        """
+        np.random.seed(0)
+        n = 40
+        X = np.column_stack([np.ones(n), np.random.randn(n, 2)])
+        beta_hat = np.array([1.0, 2.0, -1.0])
+        y = X @ beta_hat + np.random.normal(0, 0.2, n)
+
+        fig = residual_plots(X, y, beta_hat)
+        ax = fig.get_axes()[3]
+
+        threshold_lines = [
+            line
+            for line in ax.get_lines()
+            if np.allclose(line.get_ydata(), 4 / n, atol=1e-10)
+        ]
+        try:
+            assert len(threshold_lines) == 1
+        finally:
+            plt.close(fig)
+
+    def test_high_leverage_outlier_has_large_cooks_distance(self):
+        """Test that high-leverage outliers yield a large Cook's Distance.
+
+        An observation that is extreme in both X-space (high leverage) and y-space
+        must produce a Cook's Distance exceeding the 4/n threshold. This verifies that
+        the diagnostic plot can actually detect influential points as intended.
+        """
+        np.random.seed(0)
+        n = 50
+        X_raw = np.random.randn(n, 2)
+        beta_true = np.array([1.0, 2.0, -1.0])
+
+        X_raw[0] = [100.0, 100.0]  # extreme point in X-space
+        X = np.column_stack([np.ones(n), X_raw])
+        y = X @ beta_true
+        y[0] += 500.0  # extreme point in y-space as well
+
+        fig = residual_plots(X, y, beta_true)
+        ax = fig.get_axes()[3]
+
+        stem_container = ax.containers[0]
+        cooks_d = np.array(
+            [seg[1][1] for seg in stem_container.stemlines.get_segments()]
+        )
+
+        try:
+            assert cooks_d[0] > 4 / n
+        finally:
+            plt.close(fig)
