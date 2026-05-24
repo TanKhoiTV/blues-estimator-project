@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.residual_analysis import residual_plots
-from part1.ols_implementation import ols_fit
+from part1.ols_implementation import ols_fit, hat_matrix
 
 
 class TestResidualAnalysis:
@@ -123,7 +123,7 @@ class TestResidualAnalysis:
         res_expected = y - y_hat_expected
 
         # Tính toán ma trận Hat thủ công: H = X(X^TX)^-1X^T
-        H_mat_expected = X @ np.linalg.pinv(X.T @ X) @ X.T
+        H_mat_expected = hat_matrix(X)
         h_ii_expected = np.diag(H_mat_expected)
         h_ii_expected = np.clip(h_ii_expected, 0, 0.9999)
 
