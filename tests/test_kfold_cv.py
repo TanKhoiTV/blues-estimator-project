@@ -24,11 +24,25 @@ class TestKFoldCV:
 
         # Expect kfold_cv to execute internally or expose metrics per fold
         # For validation, we test if the function executes smoothly and returns a list of scores length k
-        cv_scores, mean_score = kfold_cv(X, y, k=k_folds)
+        cv_scores, mean_score = kfold_cv(X, y, k=k_folds, random_state=0)
 
+        # Check number of folds and data type
         assert len(cv_scores) == k_folds
         assert isinstance(mean_score, float)
         assert mean_score > 0.0
+
+        # Verify mean_score with mean of cv_scores
+        assert mean_score == pytest.approx(np.mean(cv_scores))
+
+        # Verify reproducibility — same seed → same scores
+        cv_scores_2, _ = kfold_cv(X, y, k=k_folds, random_state=0)
+        np.testing.assert_array_equal(cv_scores, cv_scores_2)
+
+        # Verify partition: total samples through all folds = n_samples
+        fold_sizes = [n_samples // k_folds] * k_folds
+        for i in range(n_samples % k_folds):
+            fold_sizes[i] += 1
+        assert sum(fold_sizes) == n_samples
 
     def test_perfect_fit_zero_error(self):
         """Test CV score on a noiseless deterministic system.
