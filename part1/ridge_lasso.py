@@ -8,29 +8,49 @@ def ridge_fit(X, y, lam):
     """
     Compute Ridge Regression (L2 Regularization) solution using closed-form formula.
 
-    Args:
-        X (array-like): Design matrix.
-        y (array-like): Target vector.
-        lam (float): Regularization parameter (lambda).
+    An intercept column is prepended internally. Do NOT include one in X.
+
+    Parameters
+    ----------
+        X: array-like of shape (n, p)
+           Design matrix of predictors, without intercept column.
+        y: array-like of shape (n, )
+           Response vector.
+        lam: float
+           Regularization parameter (lambda).
 
     Returns
     -------
-        numpy.ndarray: Estimated coefficients beta_hat.
+        beta_hat: ndarray of shape (p + 1, )
+            Estimated coefficients, where beta_hat[0] is the unpenalized intercept.
     """
-    X = np.asarray(X)
-    y = np.asarray(y)
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    if X.size == 0 or y.size == 0:
+        raise ValueError("Input matrices X and y cannot be empty.")
+    if X.ndim != 2:
+        raise ValueError(f"X must be a 2D array, but got {X.ndim}D.")
+    if y.ndim != 1:
+        raise ValueError(f"y must be a 1D array, but got {y.ndim}D.")
 
     n, p = X.shape
 
+    if n != y.shape[0]:
+        raise ValueError(f"Mismatch: X has {n} samples, y has {y.shape[0]} samples.")
+
+    X_aug = np.column_stack([np.ones(n), X])
+
     # Tạo ma trận đơn vị I
-    I = np.eye(p)
+    I = np.eye(p + 1)
+    I[0, 0] = 0.0
 
     # Công thức đóng: beta_hat = (X^T X + lambda * I)^-1 X^T y
-    xtx = X.T @ X
+    xtx = X_aug.T @ X_aug
     ridge_matrix = xtx + lam * I
 
     # Dùng np.linalg.pinv (giả nghịch đảo) để tính toán an toàn hơn với số học
-    beta_hat = np.linalg.pinv(ridge_matrix) @ X.T @ y
+    beta_hat = np.linalg.pinv(ridge_matrix) @ X_aug.T @ y
 
     return beta_hat
 
