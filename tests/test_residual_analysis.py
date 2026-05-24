@@ -27,12 +27,12 @@ class TestResidualAnalysis:
         n_samples = 15
         n_features = 3
 
-        X = np.random.randn(n_samples, n_features)
-        beta_true = np.array([1.0, 2.0, -0.5])
-        y = X @ beta_true + np.random.normal(0, 0.1, size=n_samples)
+        X_raw = np.random.randn(n_samples, n_features)
+        X_aug = np.column_stack([np.ones(n_samples), X_raw])
+        beta_true = np.array([1.0, 1.0, 2.0, -0.5])  # intercept + 3 features
+        y = X_aug @ beta_true + np.random.normal(0, 0.1, size=n_samples)
 
-        # Thực thi hàm sinh biểu đồ
-        fig = residual_plots(X, y, beta_true)
+        fig = residual_plots(X_aug, y, beta_true)
 
         # Xác thực kiểu dữ liệu trả về và cấu trúc layout 2x2
         assert isinstance(fig, plt.Figure)
