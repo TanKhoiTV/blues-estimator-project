@@ -84,6 +84,56 @@ class TestRidgeFit:
         assert np.abs(beta_lam_large[1]) < np.abs(beta_lam_small[1])
         assert np.abs(beta_lam_large[2]) < np.abs(beta_lam_small[2])
 
+    def test_large_lambda_shrinks_coefficients_to_zero(self):
+        """Test coefficient shrinkage at extreme lambda values.
+
+        When lambda approaches infinity, all penalized coefficients (excluding intercept)
+        must converge to zero.
+        """
+        np.random.seed(0)
+        X = np.random.randn(50, 3)
+        y = np.random.randn(50)
+
+        beta_hat = ridge_fit(X, y, lam=1e10)
+
+        np.testing.assert_allclose(beta_hat[1:], 0.0, atol=1e-4)
+
+    def test_multicollinear_features_returns_stable_solution(self):
+        """Test that Ridge regression handles multicollinearity stably.
+
+        The model must return a finite, stable solution even when X is
+        rank-deficient due to perfectly collinear features.
+        """
+        np.random.seed(0)
+        X_raw = np.random.randn(30, 2)
+        X = np.column_stack(
+            [X_raw, X_raw[:, 0]]
+        )  # column 3 = column 1 (perfect collinearity)
+        y = np.random.randn(30)
+
+        beta_hat = ridge_fit(X, y, lam=1.0)
+
+        assert beta_hat.shape == (4,)  # 3 features + 1 intercept
+        assert np.all(np.isfinite(beta_hat))
+
+    def test_intercept_not_penalized(self):
+        """Test that the intercept is excluded from the L2 penalty.
+
+        When y is shifted by a constant c, beta_hat[0] (intercept) must increase
+        by exactly c while all slope coefficients remain unchanged. This verifies that
+        the intercept is excluded from the L2 penalty as intended by the I[0,0]=0 design.
+        """
+        np.random.seed(0)
+        X = np.random.randn(40, 2)
+        y = np.random.randn(40)
+        c = 100.0
+
+        beta_original = ridge_fit(X, y, lam=5.0)
+        beta_shifted = ridge_fit(X, y + c, lam=5.0)
+
+        np.testing.assert_allclose(beta_shifted[0], beta_original[0] + c, atol=1e-6)
+        np.testing.assert_allclose(beta_shifted[1:], beta_original[1:], atol=1e-6)
+
 
 class TestPlotRidgeTrace:
     """Test suite for plot_ridge_trace visualization function."""
