@@ -1,13 +1,18 @@
+import matplotlib
+
+matplotlib.use("Agg")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pytest
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.residual_analysis import residual_plots
+from part1.ols_implementation import ols_fit
 
 
 class TestResidualAnalysis:
@@ -53,16 +58,17 @@ class TestResidualAnalysis:
         """
         np.random.seed(123)
         n_samples = 20
-        n_features = 2  # Cột đầu là intercept, cột sau là biến độc lập
+        n_features = 2
 
-        # Thiết lập ma trận thiết kế có hệ số chặn (cột đầu toàn 1)
-        X = np.column_stack(
-            [np.ones(n_samples), np.random.randn(n_samples, n_features - 1)]
-        )
-        beta_hat = np.array([2.5, -1.2])
-        y = X @ beta_hat + np.random.normal(0, 0.05, size=n_samples)
+        X_raw = np.random.rand(n_samples, n_features - 1)
+        beta_true = np.array([2.5, -1.2])
 
-        fig = residual_plots(X, y, beta_hat)
+        X_full = np.column_stack([np.ones(n_samples), X_raw])
+        y = X_full @ beta_true + np.random.normal(0, 0.05, size=n_samples)
+
+        beta_hat, _ = ols_fit(X_raw, y)
+
+        fig = residual_plots(X_full, y, beta_hat)
         axes = fig.get_axes()
 
         # Trích xuất y_hat và residuals từ Plot 1: Residuals vs Fitted
@@ -71,7 +77,9 @@ class TestResidualAnalysis:
         residuals_extracted = scatter_data[:, 1]
 
         # Kiểm tra công thức cơ bản: y_hat = X @ beta_hat và residuals = y - y_hat
-        np.testing.assert_array_almost_equal(y_hat_extracted, X @ beta_hat, decimal=7)
+        np.testing.assert_array_almost_equal(
+            y_hat_extracted, X_full @ beta_hat, decimal=7
+        )
         np.testing.assert_array_almost_equal(
             residuals_extracted, y - y_hat_extracted, decimal=7
         )
