@@ -59,7 +59,8 @@ def plot_ridge_trace(X, y, lambdas=None):
     """
     Plot the Ridge Trace to visualize how coefficients change with lambda.
 
-    Args:
+    Parameters
+    ----------
         X (array-like): Design matrix.
         y (array-like): Target vector.
         lambdas (array-like, optional): Array of lambda values. Defaults to logspace(-3, 3).
@@ -89,8 +90,8 @@ def plot_ridge_trace(X, y, lambdas=None):
         ax.plot(lambdas, betas[:, j], label=f"$\\beta_{{{j}}}$")
 
     ax.set_xscale("log")
-    ax.set_xlabel("$\lambda$ (Log Scale)", fontsize=12)
-    ax.set_ylabel("Coefficients ($\\beta$)", fontsize=12)
+    ax.set_xlabel(r"$\lambda$ (Log Scale)", fontsize=12)
+    ax.set_ylabel(r"Coefficients ($\\beta$)", fontsize=12)
     ax.set_title(
         "Ridge Trace: Coefficient Paths vs. Regularization Strength",
         fontsize=14,
