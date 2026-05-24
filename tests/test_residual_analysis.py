@@ -96,10 +96,11 @@ class TestResidualAnalysis:
         """
         np.random.seed(456)
         n_samples = 12
-        n_features = 2
+        n_features = 2  # Không tính intercept
 
-        X = np.random.randn(n_samples, n_features)
-        beta_hat = np.array([0.8, 1.5])
+        X_raw = np.random.rand(n_samples, n_features)
+        X = np.column_stack([np.ones(n_samples), X_raw])
+        beta_hat = np.array([0.5, 0.8, 1.5])  # intercept + 2 predictors
         y = X @ beta_hat + np.random.normal(0, 0.2, size=n_samples)
 
         fig = residual_plots(X, y, beta_hat)
