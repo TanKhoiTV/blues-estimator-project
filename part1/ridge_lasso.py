@@ -49,7 +49,7 @@ def ridge_fit(X, y, lam):
     xtx = X_aug.T @ X_aug
     ridge_matrix = xtx + lam * I
 
-    # Dùng np.linalg.pinv (giả nghịch đảo) để tính toán an toàn hơn với số học
+    # Dùng np.linalg.solve (giả nghịch đảo) để tính toán an toàn hơn với số học
     beta_hat = np.linalg.solve(ridge_matrix, X_aug.T @ y)
 
     return beta_hat
