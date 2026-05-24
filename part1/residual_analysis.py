@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
+from part1.ols_implementation import hat_matrix
+
 
 def residual_plots(X, y, beta_hat):
     """
@@ -16,7 +18,8 @@ def residual_plots(X, y, beta_hat):
     4. Cook's Distance
 
     Args:
-        X (array-like): Design matrix.
+        X (array-like): Design matrix INCLUDING intercept column.
+            Must match the X used to compute beta_hat
         y (array-like): Target vector.
         beta_hat (array-like): Estimated OLS coefficients.
 
@@ -36,8 +39,7 @@ def residual_plots(X, y, beta_hat):
 
     # 2. Tính ma trận Hat (Leverage) để chuẩn hóa phần dư và tính Cook's Distance
     # h_ii là các phần tử trên đường chéo của ma trận Hat
-    xtx_inv = np.linalg.pinv(X.T @ X)
-    H_mat = X @ xtx_inv @ X.T
+    H_mat = hat_matrix(X)
     h_ii = np.diag(H_mat)
 
     # Tránh lỗi chia cho 0 do sai số dấu phẩy động
