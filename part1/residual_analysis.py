@@ -52,7 +52,10 @@ def residual_plots(X, y, beta_hat):
     mse = np.sum(residuals**2) / (n - p)
 
     # 3. Chuẩn hóa phần dư (Standardized Residuals)
-    std_residuals = residuals / np.sqrt(mse * (1 - h_ii))
+    if np.isclose(mse, 0):
+        std_residuals = np.zeros_like(residuals)
+    else:
+        std_residuals = residuals / np.sqrt(mse * (1 - h_ii))
 
     # 4. Tính khoảng cách Cook (Cook's Distance)
     cooks_d = (std_residuals**2 / p) * (h_ii / (1 - h_ii))
