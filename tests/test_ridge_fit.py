@@ -1,5 +1,10 @@
+import matplotlib
+
+matplotlib.use("Agg")
+
 import numpy as np
 from sklearn.linear_model import Ridge
+import matplotlib.pyplot as plt
 import pytest
 import sys
 from pathlib import Path
@@ -8,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 from part1.ols_implementation import ols_fit
-from part1.ridge_lasso import ridge_fit
+from part1.ridge_lasso import ridge_fit, plot_ridge_trace
 
 
 class TestRidgeFit:
@@ -78,3 +83,66 @@ class TestRidgeFit:
         # Intercept shouldn't be penalized down to zero, but predictors must shrink
         assert np.abs(beta_lam_large[1]) < np.abs(beta_lam_small[1])
         assert np.abs(beta_lam_large[2]) < np.abs(beta_lam_small[2])
+
+
+class TestPlotRidgeTrace:
+    """Test suite for plot_ridge_trace visualization function."""
+
+    @pytest.fixture
+    def sample_data(self):
+        """Fixture to provide consistent toy data for plotting tests."""
+        np.random.seed(42)
+        n_samples = 40
+        n_features = 3
+        X = np.random.randn(n_samples, n_features)
+        y = 2.0 * X[:, 0] - 1.5 * X[:, 1] + np.random.normal(0, 0.1, n_samples)
+        return X, y
+
+    def test_plot_returns_figure_and_does_not_error(self, sample_data):
+        """Verify that the function executes successfully and returns a matplotlib Figure."""
+        X, y = sample_data
+
+        fig = plot_ridge_trace(X, y)
+
+        # Explicitly close the plot to prevent memory leaks during testing
+        try:
+            assert isinstance(fig, plt.Figure)
+        finally:
+            plt.close(fig)
+
+    def test_plot_elements_and_labels(self, sample_data):
+        """Verify that axes labels, title, and scale type are configured correctly."""
+        X, y = sample_data
+
+        fig = plot_ridge_trace(X, y)
+        ax = fig.gca()  # Get current axes
+
+        try:
+            # Check scale type
+            assert ax.get_xscale() == "log"
+
+            # Check that labels and titles are set (stripping spaces/quotes for robust checking)
+            assert "lambda" in ax.get_xlabel().lower()
+            assert "coefficient" in ax.get_ylabel().lower()
+            assert "ridge trace" in ax.get_title().lower()
+        finally:
+            plt.close(fig)
+
+    def test_plot_tracks_all_coefficients(self, sample_data):
+        """Verify that the plot renders paths for all parameters (intercept + features)."""
+        X, y = sample_data
+        n_features = X.shape[1]
+
+        expected_coef_lines = n_features + 1  # 3 features + 1 intercept
+
+        fig = plot_ridge_trace(X, y)
+        ax = fig.gca()
+
+        try:
+            # Check that the number of plotted lines matches our parameter count
+            total_lines = ax.get_lines()
+
+            # The total lines should equal our coefficients plus the 1 axhline baseline
+            assert len(total_lines) == expected_coef_lines + 1
+        finally:
+            plt.close(fig)
