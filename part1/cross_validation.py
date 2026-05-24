@@ -56,14 +56,9 @@ def kfold_cv(X, y, k=5, random_state=None):
         # Huấn luyện mô hình
         beta_hat, _ = ols_fit(X_train, y_train)
 
-        # Kiểm tra xem ols_fit có tự động thêm 1 cột Intercept vào beta_hat hay không
-        if beta_hat.shape[0] == X_val.shape[1] + 1:
-            # Nếu có, ta phải gắn thêm 1 cột số 1 vào X_val để kích thước khớp nhau
-            X_val_padded = np.column_stack((np.ones(X_val.shape[0]), X_val))
-            y_val_pred = X_val_padded @ beta_hat
-        else:
-            # Nếu kích thước đã khớp (ols_fit không thêm), thì nhân bình thường
-            y_val_pred = X_val @ beta_hat
+        # ols_fit luôn thêm cột intercept và trả về (p+1,) hệ số
+        X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
+        y_val_pred = X_val_aug @ beta_hat
 
         # Tính Mean Squared Error (MSE) cho fold hiện tại
         mse = np.mean((y_val - y_val_pred) ** 2)
