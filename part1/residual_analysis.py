@@ -20,6 +20,9 @@ def residual_plots(X, y, beta_hat):
     Args:
         X (array-like): Design matrix INCLUDING intercept column.
             Must match the X used to compute beta_hat
+            NOTE: Unlike ridge_fit/ols_fit which prepend intercept internally,
+            this function expects X to already contain the intercept column.
+            Example: X_aug = np.column_stack([np.ones(n), X_raw])
         y (array-like): Target vector.
         beta_hat (array-like): Estimated OLS coefficients.
 
@@ -85,11 +88,11 @@ def residual_plots(X, y, beta_hat):
     # --- Plot 3: Scale-Location ---
     sqrt_std_res = np.sqrt(np.abs(std_residuals))
     axes[1, 0].scatter(
-        y_hat, sqrt_std_res, alpha=0.7, edgecolors="k", label="$\sqrt{|Std. Res|}$"
+        y_hat, sqrt_std_res, alpha=0.7, edgecolors="k", label=r"$\sqrt{|Std. Res|}$"
     )
     axes[1, 0].set_title("Scale-Location")
     axes[1, 0].set_xlabel("Fitted values")
-    axes[1, 0].set_ylabel("$\sqrt{|Standardized\ Residuals|}$")
+    axes[1, 0].set_ylabel(r"$\sqrt{|Standardized\ Residuals|}$")
     axes[1, 0].legend()
 
     # --- Plot 4: Cook's Distance ---
@@ -100,7 +103,6 @@ def residual_plots(X, y, beta_hat):
     axes[1, 1].set_ylabel("Cook's Distance")
     axes[1, 1].legend()
 
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.92)  # Nhường chỗ cho title tổng
+    fig.tight_layout(rect=[0, 0, 1, 0.92])
 
     return fig
