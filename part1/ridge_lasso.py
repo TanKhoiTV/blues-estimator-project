@@ -50,7 +50,7 @@ def ridge_fit(X, y, lam):
     ridge_matrix = xtx + lam * I
 
     # Dùng np.linalg.pinv (giả nghịch đảo) để tính toán an toàn hơn với số học
-    beta_hat = np.linalg.pinv(ridge_matrix) @ X_aug.T @ y
+    beta_hat = np.linalg.solve(ridge_matrix, X_aug.T @ y)
 
     return beta_hat
 
@@ -91,7 +91,7 @@ def plot_ridge_trace(X, y, lambdas=None):
 
     ax.set_xscale("log")
     ax.set_xlabel(r"$\lambda$ (Log Scale)", fontsize=12)
-    ax.set_ylabel(r"Coefficients ($\\beta$)", fontsize=12)
+    ax.set_ylabel(r"Coefficients ($\beta$)", fontsize=12)
     ax.set_title(
         "Ridge Trace: Coefficient Paths vs. Regularization Strength",
         fontsize=14,
