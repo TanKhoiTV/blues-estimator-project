@@ -26,8 +26,12 @@ def kfold_cv(X, y, k=5, random_state=None):
         raise ValueError(
             f"Shape mismatch: X has {n_samples} samples, but y has {y.shape[0]} samples."
         )
-    if k < 2 or k > n_samples:
-        raise ValueError(f"Invalid folds: k={k}. Must be between 2 and {n_samples}.")
+    if k < 2:
+        raise ValueError(f"k must be greater than 1. Received k={k}.")
+    if k > n_samples:
+        raise ValueError(
+            f"k cannot exceed number of samples. Received k={k}, n_samples={n_samples}."
+        )
 
     # Tạo mảng chỉ số và thiết lập xáo trộn ngẫu nhiên có fixed seed
     indices = np.arange(n_samples)
