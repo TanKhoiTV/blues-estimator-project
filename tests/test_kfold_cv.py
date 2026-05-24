@@ -75,3 +75,56 @@ class TestKFoldCV:
         # k cannot exceed n_samples
         with pytest.raises(ValueError, match="k cannot exceed number of samples"):
             kfold_cv(X, y, k=15)
+
+    def test_reproducibility_with_same_seed(self):
+        """Verify that kfold_cv yields reproducible fold scores given a seed.
+
+        Given the same random_state, kfold_cv must produce identical fold scores
+        across multiple calls. Without this guarantee, any experiment or hyperparameter
+        comparison built on top of this CV function would be unreliable.
+        """
+        np.random.seed(0)
+        X = np.random.randn(60, 3)
+        y = np.random.randn(60)
+
+        scores_1, mean_1 = kfold_cv(X, y, k=5, random_state=42)
+        scores_2, mean_2 = kfold_cv(X, y, k=5, random_state=42)
+
+        np.testing.assert_array_equal(scores_1, scores_2)
+        assert mean_1 == mean_2
+
+    def test_mean_score_equals_mean_of_fold_scores(self):
+        """Verify internal consistency of the returned mean score.
+
+        The returned mean_score must equal exactly np.mean(cv_scores).
+        This verifies internal consistency: if these two values diverge,
+        the aggregation logic is broken regardless of whether individual folds are correct.
+        """
+        np.random.seed(0)
+        X = np.random.randn(50, 2)
+        y = np.random.randn(50)
+
+        scores, mean_score = kfold_cv(X, y, k=5, random_state=7)
+
+        assert mean_score == pytest.approx(np.mean(scores), rel=1e-10)
+
+    def test_higher_noise_yields_higher_cv_score(self):
+        """Validate that CV score scales properly with data noise levels.
+
+        A model trained on high-noise data must produce a higher mean CV score
+        than the same model on low-noise data. This validates that the CV score
+        actually reflects prediction difficulty, not just that the function runs without error.
+        """
+        np.random.seed(0)
+        n, p = 80, 3
+        X = np.random.randn(n, p)
+        X_aug = np.column_stack([np.ones(n), X])
+        beta = np.array([1.0, 2.0, -1.0, 0.5])
+
+        y_low_noise = X_aug @ beta + np.random.normal(0, 0.01, n)
+        y_high_noise = X_aug @ beta + np.random.normal(0, 10.0, n)
+
+        _, score_low = kfold_cv(X, y_low_noise, k=5, random_state=0)
+        _, score_high = kfold_cv(X, y_high_noise, k=5, random_state=0)
+
+        assert score_high > score_low
