@@ -23,6 +23,13 @@ def generate_synthetic_data(
     y       : vector phản hồi (n,)
     epsilon : vector nhiễu (n,)  — GM1: E[ε]=0, GM3: Var(ε)=σ²I, GM4: không tự tương quan
     """
+    if n <= 0:
+        raise ValueError("n must be positive")
+    if sigma <= 0:
+        raise ValueError("sigma must be positive")
+    if n < len(beta):
+        raise ValueError("n must be >= len(beta) for full rank design matrix")
+
     if rng is None:
         rng = np.random.default_rng()
 
