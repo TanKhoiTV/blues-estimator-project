@@ -135,31 +135,31 @@ class DataPipeline:
             Dataset with imputed missing values.
         """
         df = df.copy()
-        # Gán khuyết thiếu SES bằng Group-by Median
+
+        # Tính trung vị toàn cục của SES phòng trường hợp khẩn cấp
+        global_ses_median = df["SES"].median() if "SES" in df.columns else 3.0
+        if pd.isna(global_ses_median):
+            global_ses_median = (
+                3.0  # Giá trị mặc định an toàn nếu toàn bộ cột SES trống
+            )
+
         if "SES" in df.columns and "EDUC" in df.columns:
+            # Điền khuyết theo nhóm EDUC
+            for idx, row in df[df["SES"].isna()].iterrows():
+                educ_val = row["EDUC"]
+                # Lấy trung vị theo nhóm EDUC đã học từ tập Train
+                group_median = self.categorical_values_.get("ses_by_educ", {}).get(
+                    educ_val
+                )
 
-            def impute_ses(row):
-                if pd.isna(row["SES"]):
-                    # Lấy trung vị của nhóm EDUC tương ứng.
-                    # Nếu nhóm EDUC này chưa từng xuất hiện trong tập Train, dùng global mode
-                    return self.ses_educ_medians_.get(
-                        row["EDUC"], self.ses_global_mode_
-                    )
-                return row["SES"]
+                # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
+                if pd.isna(group_median):
+                    df.at[idx, "SES"] = global_ses_median
+                else:
+                    df.at[idx, "SES"] = group_median
 
-            df["SES"] = df.apply(impute_ses, axis=1)
-            # Bắt buộc ép về kiểu int để bảo toàn thang đo thứ bậc 1-5
+            # Ép kiểu an toàn sau khi đã đảm bảo sạch bóng NaN
             df["SES"] = df["SES"].astype(int)
-
-        # Điền khuyết bằng Mean cho các cột số còn lại
-        for col in self.numeric_columns_:
-            if col != "SES" and col in df.columns:
-                df[col] = df[col].fillna(self.numeric_means_[col])
-
-        # Điền khuyết bằng Mode cho các cột phân loại còn lại
-        for col in self.categorical_columns_:
-            if col != "SES" and col in df.columns:
-                df[col] = df[col].fillna(self.categorical_modes_[col])
 
         return df
 
@@ -308,26 +308,9 @@ class DataPipeline:
         return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
     def preprocess(
-        self, file_path: str, target_column: str
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """
-        Execute the full preprocessing pipeline.
-
-        Parameters
-        ----------
-        file_path : str
-            Path to the dataset file.
-        target_column : str
-            Name of the target column.
-
-        Returns
-        -------
-        tuple
-            Preprocessed training features,
-            testing features,
-            training labels,
-            and testing labels.
-        """
+        self, file_path: str, target_column: str, split: bool = True
+    ) -> Tuple:
+        """Thực thi đường ống tiền xử lý dữ liệu với cơ chế kiểm tra nghiêm ngặt."""
         # Load dataset & Remove duplicates
         df = self.load_dataset(file_path)
         df = self.remove_duplicates(df)
@@ -335,13 +318,21 @@ class DataPipeline:
         # Xóa các dòng bị khuyết biến mục tiêu (MMSE)
         df = df.dropna(subset=[target_column])
 
-        # Chỉ giữ lại các biến đã được chọn lọc đưa vào mô hình OLS
-        selected_columns = ["nWBV", "Age", "EDUC", "SES", target_column]
-        # Bỏ qua các cột lỗi nếu file csv thiếu cột
-        existing_columns = [col for col in selected_columns if col in df.columns]
-        df = df[existing_columns]
+        # Các cột bắt buộc cần có cho mô hình OLS cơ sở
+        required_columns = ["nWBV", "Age", "EDUC", "SES", target_column]
 
-        # Split BEFORE fitting to avoid leakage
+        # Kiểm tra xem có bị thiếu cột cấu trúc nào không
+        missing_cols = [col for col in required_columns if col not in df.columns]
+        if missing_cols:
+            raise ValueError(
+                f"Lỗi cấu trúc dữ liệu: File CSV đầu vào thiếu các cột bắt buộc sau: {missing_cols}. "
+                f"Không thể tiếp tục tiền xử lý luồng OLS."
+            )
+
+        # Giữ lại đúng các cột quy chuẩn
+        df = df[required_columns]
+
+        # (Chia Train/Test để chống Leakage)
         X_train, X_test, y_train, y_test = self.split_data(df, target_column)
 
         # Learn parameters ONLY from training data
