@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import pytest
 import sys
 from pathlib import Path
@@ -8,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.append(str(PROJECT_ROOT))
 
-from part1.ols_implementation import ols_fit
+from part1.ols_implementation import ols_fit, model_metrics
 
 
 class TestOLSFit:
@@ -95,9 +96,50 @@ class TestOLSFit:
 
     def test_metrics_numerical_correctness(self):
         """Verify TSS, R-squared, Adjusted R-squared, and F-statistic values analytically."""
-        # Waiting for model_metrics to be review and merged
+        np.random.seed(42)
 
-        pass
+        n_samples = 60
+        n_features = 3
+        beta_true = np.array([2.0, 1.5, -0.8, 0.5])
+        noise_std = 0.1
+
+        X = np.random.rand(n_samples, n_features)
+        X_aug = np.column_stack([np.ones(n_samples), X])
+        epsilon = np.random.normal(loc=0, scale=noise_std, size=n_samples)
+        y = X_aug @ beta_true + epsilon
+
+        beta_hat, sigma2_hat = ols_fit(X, y)
+        y_hat_own = X_aug @ beta_hat
+
+        metrics = model_metrics(y, y_hat_own, p=n_features)
+
+        reg = LinearRegression(fit_intercept=True)
+        reg.fit(X, y)
+        y_hat_sklearn = reg.predict(X)
+
+        mae_sklearn = mean_absolute_error(y, y_hat_sklearn)
+        rmse_sklearn = np.sqrt(mean_squared_error(y, y_hat_sklearn))
+        r2_sklearn = r2_score(y, y_hat_sklearn)
+
+        tss_sklearn = np.sum((y - np.mean(y)) ** 2)
+        rss_sklearn = np.sum((y - y_hat_sklearn) ** 2)
+
+        adj_r2_sklearn = 1 - ((n_samples - 1) / (n_samples - n_features - 1)) * (
+            1 - r2_sklearn
+        )
+        f_stat_sklearn = ((tss_sklearn - rss_sklearn) / n_features) / (
+            rss_sklearn / (n_samples - n_features - 1)
+        )
+
+        assert metrics["TSS"] == pytest.approx(tss_sklearn, rel=1e-6)
+        assert metrics["RSS"] == pytest.approx(rss_sklearn, rel=1e-6)
+        assert metrics["R2"] == pytest.approx(r2_sklearn, rel=1e-6)
+        assert metrics["Adjusted_R2"] == pytest.approx(adj_r2_sklearn, rel=1e-6)
+        assert metrics["Adj_R2"] == pytest.approx(adj_r2_sklearn, rel=1e-6)
+        assert metrics["F_statistic"] == pytest.approx(f_stat_sklearn, rel=1e-6)
+        assert metrics["F_stat"] == pytest.approx(f_stat_sklearn, rel=1e-6)
+        assert metrics["MAE"] == pytest.approx(mae_sklearn, rel=1e-6)
+        assert metrics["RMSE"] == pytest.approx(rmse_sklearn, rel=1e-6)
 
     def test_sklearn_parity(self):
         """Verify parity with scikit-learn OLS implementation at epsilon = 1e-6."""
