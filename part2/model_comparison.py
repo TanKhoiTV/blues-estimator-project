@@ -235,10 +235,7 @@ class ModelComparison:
         mse_values,
         model_name="Ridge",
     ):
-        """
-        Plot cross-validation error curve.
-        """
-
+        """Plot cross-validation error curve."""
         plt.figure(figsize=(8, 5))
 
         plt.plot(
@@ -315,9 +312,7 @@ class ModelComparison:
         threshold: float = 10.0,
         iterative: bool = True,
     ) -> Tuple[pd.DataFrame, List[str], pd.DataFrame]:
-        """
-        Select features by removing predictors with high VIF.
-        """
+        """Select features by removing predictors with high VIF."""
         if not isinstance(X_train, pd.DataFrame):
             X_train = pd.DataFrame(X_train)
 
@@ -376,9 +371,7 @@ class ModelComparison:
         y_test: pd.Series,
         vif_threshold: float = 10.0,
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        Select variables with VIF filtering, then compare OLS and regularized models.
-        """
+        """Select variables with VIF filtering, then compare OLS and regularized models."""
         X_train_selected, selected_features, vif_table = self.select_features_by_vif(
             X_train,
             threshold=vif_threshold,
@@ -446,9 +439,7 @@ class ModelComparison:
 
 
 class OLSBaseline:
-    """
-    OLS baseline model using custom implementation from Part 1.
-    """
+    """OLS baseline model using custom implementation from Part 1."""
 
     def __init__(self, random_state=42):
         self.random_state = random_state
@@ -470,10 +461,7 @@ class OLSBaseline:
         self.y_train = None
 
     def fit(self, X_train, y_train):
-        """
-        Fit OLS using custom implementation from Part 1.
-        """
-
+        """Fit OLS using custom implementation from Part 1."""
         X_train = np.asarray(X_train, dtype=float)
         y_train = np.asarray(y_train, dtype=float)
 
@@ -505,10 +493,7 @@ class OLSBaseline:
         return self
 
     def predict(self, X):
-        """
-        Predict using fitted OLS model.
-        """
-
+        """Predict using fitted OLS model."""
         X = np.asarray(X, dtype=float)
 
         n = X.shape[0]
@@ -521,10 +506,7 @@ class OLSBaseline:
         return X_aug @ self.beta_hat
 
     def evaluate(self, X_test, y_test):
-        """
-        Evaluate on held-out test set.
-        """
-
+        """Evaluate on held-out test set."""
         y_test = np.asarray(
             y_test,
             dtype=float,
@@ -549,9 +531,7 @@ class OLSBaseline:
         return self.metrics
 
     def run_inference(self, feature_names):
-        """
-        Compute coefficient inference statistics.
-        """
+        """Compute coefficient inference statistics."""
         feature_names = [
             "Intercept"
         ] + list(feature_names)
@@ -576,10 +556,7 @@ class OLSBaseline:
         return self.inference_table
 
     def compute_vif(self, X, feature_names):
-        """
-        Compute Variance Inflation Factors.
-        """
-
+        """Compute Variance Inflation Factors."""
         vif_values = vif(X)
 
         vif_scores = []
@@ -600,10 +577,7 @@ class OLSBaseline:
         return self.vif_table
 
     def diagnostic_plots(self):
-        """
-        Generate residual diagnostic plots
-        """
-
+        """Generate residual diagnostic plots."""
         return residual_plots(
             self.X_train,
             self.y_train,
@@ -612,10 +586,8 @@ class OLSBaseline:
 
 
 class OLSWithVariables(OLSBaseline):
-    """
-    OLS baseline with VIF-based variable selection before fitting.
-    """
-
+    """OLS baseline with VIF-based variable selection before fitting."""
+    
     def __init__(self, vif_threshold=10.0, random_state=42):
         super().__init__(random_state=random_state)
         self.vif_threshold = vif_threshold
@@ -625,9 +597,7 @@ class OLSWithVariables(OLSBaseline):
         self.selection_vif_table = None
 
     def select_features(self, X_train, feature_names=None):
-        """
-        Select variables by iteratively removing the largest VIF above threshold.
-        """
+        """Select variables by iteratively removing the largest VIF above threshold."""
         if isinstance(X_train, pd.DataFrame):
             X_df = X_train.copy()
         else:
@@ -652,16 +622,12 @@ class OLSWithVariables(OLSBaseline):
         return X_selected, selected_features, vif_table
 
     def fit(self, X_train, y_train, feature_names=None):
-        """
-        Select variables by VIF, then fit using the inherited OLSBaseline logic.
-        """
+        """Select variables by VIF, then fit using the inherited OLSBaseline logic."""
         X_selected, _, _ = self.select_features(X_train, feature_names)
         return super().fit(X_selected, y_train)
 
     def transform(self, X):
-        """
-        Keep the selected features from new data.
-        """
+        """Keep the selected features from new data."""
         if self.feature_names_selected is None:
             raise ValueError("Model must be fitted before calling transform.")
 
@@ -672,7 +638,5 @@ class OLSWithVariables(OLSBaseline):
         return X_arr[:, self.feature_indices_selected]
 
     def predict(self, X):
-        """
-        Predict using selected variables only.
-        """
+        """Predict using selected variables only."""
         return super().predict(self.transform(X))
