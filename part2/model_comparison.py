@@ -5,7 +5,7 @@ This module provides the ModelComparison class to train, evaluate,
 and compare multiple regression models.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -309,6 +309,112 @@ class ModelComparison:
 
         return pd.DataFrame(results).T
 
+    def select_features_by_vif(
+        self,
+        X_train: pd.DataFrame,
+        threshold: float = 10.0,
+        iterative: bool = True,
+    ) -> Tuple[pd.DataFrame, List[str], pd.DataFrame]:
+        """
+        Select features by removing predictors with high VIF.
+        """
+        if not isinstance(X_train, pd.DataFrame):
+            X_train = pd.DataFrame(X_train)
+
+        selected_features = list(X_train.columns)
+        removed_features = []
+
+        while len(selected_features) > 1:
+            current_X = X_train[selected_features]
+            current_vif = vif(current_X.to_numpy(dtype=float))
+            max_idx = int(np.argmax(current_vif))
+            max_vif = current_vif[max_idx]
+
+            if not np.isfinite(max_vif) or max_vif > threshold:
+                feature_to_remove = selected_features[max_idx]
+                removed_features.append({
+                    "feature": feature_to_remove,
+                    "VIF": max_vif,
+                    "removed": True,
+                })
+                selected_features.pop(max_idx)
+
+                if iterative:
+                    continue
+
+            break
+
+        final_vif_values = vif(X_train[selected_features].to_numpy(dtype=float))
+        final_vif_table = pd.DataFrame({
+            "feature": selected_features,
+            "VIF": final_vif_values,
+            "High Multicollinearity": final_vif_values > threshold,
+            "removed": False,
+        })
+
+        if removed_features:
+            removed_table = pd.DataFrame(removed_features)
+            removed_table["High Multicollinearity"] = True
+            final_vif_table = pd.concat(
+                [final_vif_table, removed_table],
+                ignore_index=True,
+            )
+
+        final_vif_table = final_vif_table.sort_values(
+            ["removed", "VIF"],
+            ascending=[True, False],
+            na_position="last",
+        ).reset_index(drop=True)
+
+        return X_train[selected_features].copy(), selected_features, final_vif_table
+
+    def compare_metrics_with_variable_selection(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        X_test: pd.DataFrame,
+        y_test: pd.Series,
+        vif_threshold: float = 10.0,
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Select variables with VIF filtering, then compare OLS and regularized models.
+        """
+        X_train_selected, selected_features, vif_table = self.select_features_by_vif(
+            X_train,
+            threshold=vif_threshold,
+            iterative=True,
+        )
+        if isinstance(X_test, pd.DataFrame):
+            X_test_selected = X_test[selected_features].copy()
+        else:
+            X_test_arr = np.asarray(X_test, dtype=float)
+            selected_indices = [
+                X_train.columns.get_loc(feature)
+                if isinstance(X_train, pd.DataFrame)
+                else int(feature)
+                for feature in selected_features
+            ]
+            X_test_selected = X_test_arr[:, selected_indices]
+
+        metrics_df = self.compare_metrics(
+            X_train_selected,
+            y_train,
+            X_test_selected,
+            y_test,
+        )
+
+        selection_info = {
+            "X_train_selected": X_train_selected,
+            "X_test_selected": X_test_selected,
+            "feature_names_selected": selected_features,
+            "vif_table": vif_table,
+            "removed_features": vif_table.loc[
+                vif_table["removed"], "feature"
+            ].tolist(),
+        }
+
+        return metrics_df, selection_info
+
     def generate_summary(self, metrics_df: pd.DataFrame) -> str:
         """
         Generate a text summary of the model comparison results.
@@ -496,7 +602,6 @@ class OLSBaseline:
     def diagnostic_plots(self):
         """
         Generate residual diagnostic plots
-        using implementation from Part 1.
         """
 
         return residual_plots(
@@ -504,3 +609,70 @@ class OLSBaseline:
             self.y_train,
             self.beta_hat,
         )
+
+
+class OLSWithVariables(OLSBaseline):
+    """
+    OLS baseline with VIF-based variable selection before fitting.
+    """
+
+    def __init__(self, vif_threshold=10.0, random_state=42):
+        super().__init__(random_state=random_state)
+        self.vif_threshold = vif_threshold
+        self.feature_names_selected = None
+        self.feature_indices_selected = None
+        self.removed_features = None
+        self.selection_vif_table = None
+
+    def select_features(self, X_train, feature_names=None):
+        """
+        Select variables by iteratively removing the largest VIF above threshold.
+        """
+        if isinstance(X_train, pd.DataFrame):
+            X_df = X_train.copy()
+        else:
+            X_df = pd.DataFrame(X_train, columns=feature_names)
+
+        comparison = ModelComparison()
+        X_selected, selected_features, vif_table = comparison.select_features_by_vif(
+            X_df,
+            threshold=self.vif_threshold,
+            iterative=True,
+        )
+
+        self.feature_names_selected = selected_features
+        self.feature_indices_selected = [
+            X_df.columns.get_loc(feature) for feature in selected_features
+        ]
+        self.removed_features = vif_table.loc[
+            vif_table["removed"], "feature"
+        ].tolist()
+        self.selection_vif_table = vif_table
+
+        return X_selected, selected_features, vif_table
+
+    def fit(self, X_train, y_train, feature_names=None):
+        """
+        Select variables by VIF, then fit using the inherited OLSBaseline logic.
+        """
+        X_selected, _, _ = self.select_features(X_train, feature_names)
+        return super().fit(X_selected, y_train)
+
+    def transform(self, X):
+        """
+        Keep the selected features from new data.
+        """
+        if self.feature_names_selected is None:
+            raise ValueError("Model must be fitted before calling transform.")
+
+        if isinstance(X, pd.DataFrame):
+            return X[self.feature_names_selected].copy()
+
+        X_arr = np.asarray(X, dtype=float)
+        return X_arr[:, self.feature_indices_selected]
+
+    def predict(self, X):
+        """
+        Predict using selected variables only.
+        """
+        return super().predict(self.transform(X))
