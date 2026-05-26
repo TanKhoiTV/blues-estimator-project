@@ -11,6 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
+from sklearn.linear_model import Ridge, Lasso, ElasticNet
+from sklearn.model_selection import KFold
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -21,7 +23,11 @@ from part1.ols_implementation import (
     ols_fit,
     coef_inference,
     vif,
+    model_metrics,
 )
+
+from part1.residual_analysis import residual_plots
+
 
 class ModelComparison:
     """
@@ -51,7 +57,9 @@ class ModelComparison:
         Any
             The trained Linear Regression model instance.
         """
-        pass
+        model = OLSBaseline()
+        model.fit(X_train, y_train)
+        return model
 
     def train_ridge_regression(
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
@@ -73,7 +81,9 @@ class ModelComparison:
         Any
             The trained Ridge Regression model instance.
         """
-        pass
+        model = Ridge(alpha=alpha, random_state=42)
+        model.fit(X_train, y_train)
+        return model
 
     def train_lasso_regression(
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
@@ -95,7 +105,9 @@ class ModelComparison:
         Any
             The trained Lasso Regression model instance.
         """
-        pass
+        model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
+        model.fit(X_train, y_train)
+        return model
 
     def train_elasticnet_regression(
         self,
@@ -123,7 +135,9 @@ class ModelComparison:
         Any
             The trained ElasticNet Regression model instance.
         """
-        pass
+        model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000)
+        model.fit(X_train, y_train)
+        return model
 
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
@@ -143,9 +157,108 @@ class ModelComparison:
         Returns
         -------
         dict of str to float
-            A dictionary containing evaluation metrics (e.g., MSE, R2).
+            A dictionary containing evaluation metrics (MAE, RMSE, R2).
         """
-        pass
+        # OLSBaseline uses its own evaluate() method
+        if isinstance(model, OLSBaseline):
+            return model.evaluate(X_test, y_test)
+
+        y_pred = model.predict(X_test)
+        return {
+            "MAE": mean_absolute_error(y_test, y_pred),
+            "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
+            "R2_test": r2_score(y_test, y_pred),
+        }
+
+    def cv_select_alpha(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        model_type: str = "ridge",
+        alphas=None,
+        k: int = 5,
+    ) -> tuple:
+        """
+        Select the optimal alpha via k-fold cross-validation.
+
+        Parameters
+        ----------
+        X_train : pd.DataFrame
+            The training feature data.
+        y_train : pd.Series
+            The training target data.
+        model_type : str
+            Either 'ridge' or 'lasso'.
+        alphas : array-like, optional
+            Candidate alpha values. Defaults to log-spaced values.
+        k : int
+            Number of folds (default is 5).
+
+        Returns
+        -------
+        tuple
+            (best_alpha, cv_mse_array) where cv_mse_array has shape (len(alphas),).
+        """
+        if alphas is None:
+            alphas = np.logspace(-3, 3, 100)
+
+        X_arr = np.asarray(X_train, dtype=float)
+        y_arr = np.asarray(y_train, dtype=float)
+
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+        mean_mses = []
+
+        for alpha in alphas:
+            fold_mses = []
+            for train_idx, val_idx in kf.split(X_arr):
+                X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
+                y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
+
+                if model_type == "ridge":
+                    m = Ridge(alpha=alpha, random_state=42)
+                else:
+                    m = Lasso(alpha=alpha, random_state=42, max_iter=10000)
+
+                m.fit(X_tr, y_tr)
+                y_pred = m.predict(X_val)
+                fold_mses.append(mean_squared_error(y_val, y_pred))
+
+            mean_mses.append(np.mean(fold_mses))
+
+        mean_mses = np.array(mean_mses)
+        best_alpha = alphas[np.argmin(mean_mses)]
+        return best_alpha, mean_mses
+    
+    def plot_cv_error_curve(
+        self,
+        alphas,
+        mse_values,
+        model_name="Ridge",
+    ):
+        """
+        Plot cross-validation error curve.
+        """
+
+        plt.figure(figsize=(8, 5))
+
+        plt.plot(
+            alphas,
+            mse_values,
+            marker="o",
+        )
+
+        plt.xscale("log")
+
+        plt.xlabel("Lambda (α)")
+        plt.ylabel("Cross-Validation MSE")
+
+        plt.title(
+            f"{model_name} CV Error Curve"
+        )
+
+        plt.grid(True)
+
+        plt.show()
 
     def compare_metrics(
         self,
@@ -173,7 +286,28 @@ class ModelComparison:
         pd.DataFrame
             A dataframe containing comparison metrics for all trained models.
         """
-        pass
+        alphas = np.logspace(-3, 3, 100)
+        results = {}
+
+        # OLS Baseline
+        ols = self.train_linear_regression(X_train, y_train)
+        results["OLS"] = self.evaluate_model(ols, X_test, y_test)
+
+        # Ridge with CV
+        best_ridge_alpha, _ = self.cv_select_alpha(X_train, y_train, "ridge", alphas)
+        ridge = self.train_ridge_regression(X_train, y_train, alpha=best_ridge_alpha)
+        results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(ridge, X_test, y_test)
+
+        # Lasso with CV
+        best_lasso_alpha, _ = self.cv_select_alpha(X_train, y_train, "lasso", alphas)
+        lasso = self.train_lasso_regression(X_train, y_train, alpha=best_lasso_alpha)
+        results[f"Lasso (λ={best_lasso_alpha:.4f})"] = self.evaluate_model(lasso, X_test, y_test)
+
+        # ElasticNet (default alpha/l1_ratio)
+        elasticnet = self.train_elasticnet_regression(X_train, y_train)
+        results["ElasticNet"] = self.evaluate_model(elasticnet, X_test, y_test)
+
+        return pd.DataFrame(results).T
 
     def generate_summary(self, metrics_df: pd.DataFrame) -> str:
         """
@@ -189,7 +323,21 @@ class ModelComparison:
         str
             A formatted summary string of the results.
         """
-        pass
+        best_rmse = metrics_df["RMSE"].idxmin()
+        best_r2   = metrics_df["R2_test"].idxmax()
+        best_mae  = metrics_df["MAE"].idxmin()
+
+        lines = [
+            "=" * 50,
+            "         MODEL COMPARISON SUMMARY",
+            "=" * 50,
+            f"  Best RMSE : {best_rmse} ({metrics_df.loc[best_rmse, 'RMSE']:.4f})",
+            f"  Best R²   : {best_r2} ({metrics_df.loc[best_r2, 'R2_test']:.4f})",
+            f"  Best MAE  : {best_mae} ({metrics_df.loc[best_mae, 'MAE']:.4f})",
+            "=" * 50,
+        ]
+        return "\n".join(lines)
+
 
 class OLSBaseline:
     """
@@ -271,31 +419,25 @@ class OLSBaseline:
         Evaluate on held-out test set.
         """
 
-        y_test = np.asarray(y_test, dtype=float)
-
-        self.y_test_pred = self.predict(X_test)
-
-        mae = mean_absolute_error(
+        y_test = np.asarray(
             y_test,
-            self.y_test_pred,
+            dtype=float,
         )
 
-        rmse = np.sqrt(
-            mean_squared_error(
-                y_test,
-                self.y_test_pred,
-            )
+        self.y_test_pred = self.predict(
+            X_test
         )
 
-        r2 = r2_score(
+        metrics = model_metrics(
             y_test,
             self.y_test_pred,
+            p=X_test.shape[1],
         )
 
         self.metrics = {
-            "MAE": mae,
-            "RMSE": rmse,
-            "R2_test": r2,
+            "MAE": metrics["MAE"],
+            "RMSE": metrics["RMSE"],
+            "R2_test": metrics["R2"],
         }
 
         return self.metrics
@@ -336,7 +478,7 @@ class OLSBaseline:
 
         vif_scores = []
 
-        for feature, vif_value in zip(feature_names, vif_values):  
+        for feature, vif_value in zip(feature_names, vif_values):
             vif_scores.append({
                 "feature": feature,
                 "VIF": vif_value,
@@ -353,122 +495,12 @@ class OLSBaseline:
 
     def diagnostic_plots(self):
         """
-        Produce 4 residual diagnostic plots.
+        Generate residual diagnostic plots
+        using implementation from Part 1.
         """
-        fitted = self.y_train_pred
-        residuals = self.residuals
 
-        residual_std = np.std(residuals)
-
-        if residual_std == 0:
-            standardized_residuals = residuals
-        else:
-            standardized_residuals = (
-                residuals / residual_std
-            )
-
-        fig, axes = plt.subplots(
-            2,
-            2,
-            figsize=(14, 10),
+        return residual_plots(
+            self.X_train,
+            self.y_train,
+            self.beta_hat,
         )
-
-        # 1. Residuals vs Fitted
-        axes[0, 0].scatter(
-            fitted,
-            residuals,
-        )
-
-        axes[0, 0].axhline(
-            y=0,
-            color="red",
-            linestyle="--",
-        )
-
-        axes[0, 0].set_title(
-            "Residuals vs Fitted"
-        )
-
-        axes[0, 0].set_xlabel(
-            "Fitted Values"
-        )
-
-        axes[0, 0].set_ylabel(
-            "Residuals"
-        )
-
-        # 2. Q-Q Plot
-        stats.probplot(
-            standardized_residuals,
-            dist="norm",
-            plot=axes[0, 1],
-        )
-
-        axes[0, 1].set_title(
-            "Q-Q Plot"
-        )
-
-        # 3. Scale-Location
-        axes[1, 0].scatter(
-            fitted,
-            np.sqrt(
-                np.abs(
-                    standardized_residuals
-                )
-            ),
-        )
-
-        axes[1, 0].set_title(
-            "Scale-Location"
-        )
-
-        axes[1, 0].set_xlabel(
-            "Fitted Values"
-        )
-
-        axes[1, 0].set_ylabel(
-            "Sqrt(|Standardized Residuals|)"
-        )
-
-        # 4. Cook's Distance
-        xtx_inv = np.linalg.pinv(
-            self.X_train.T @ self.X_train
-        )
-
-        leverage = np.diag(
-            self.X_train
-            @ xtx_inv
-            @ self.X_train.T
-        )
-
-        cooks_d = (
-            (
-                residuals ** 2
-            ) / (
-                self.X_train.shape[1]
-                * self.sigma2_hat
-            )
-        ) * (
-            leverage
-            / (1 - leverage) ** 2
-        )
-
-        axes[1, 1].stem(
-            np.arange(len(cooks_d)),
-            cooks_d,
-        )
-
-        axes[1, 1].set_title(
-            "Cook's Distance"
-        )
-
-        axes[1, 1].set_xlabel(
-            "Observation"
-        )
-
-        axes[1, 1].set_ylabel(
-            "Cook's Distance"
-        )
-
-        plt.tight_layout()
-        plt.show()
