@@ -135,7 +135,9 @@ class ModelComparison:
         Any
             The trained ElasticNet Regression model instance.
         """
-        model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000)
+        model = ElasticNet(
+            alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
+        )
         model.fit(X_train, y_train)
         return model
 
@@ -228,7 +230,7 @@ class ModelComparison:
         mean_mses = np.array(mean_mses)
         best_alpha = alphas[np.argmin(mean_mses)]
         return best_alpha, mean_mses
-    
+
     def plot_cv_error_curve(
         self,
         alphas,
@@ -249,9 +251,7 @@ class ModelComparison:
         plt.xlabel("Lambda (α)")
         plt.ylabel("Cross-Validation MSE")
 
-        plt.title(
-            f"{model_name} CV Error Curve"
-        )
+        plt.title(f"{model_name} CV Error Curve")
 
         plt.grid(True)
 
@@ -293,12 +293,16 @@ class ModelComparison:
         # Ridge with CV
         best_ridge_alpha, _ = self.cv_select_alpha(X_train, y_train, "ridge", alphas)
         ridge = self.train_ridge_regression(X_train, y_train, alpha=best_ridge_alpha)
-        results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(ridge, X_test, y_test)
+        results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(
+            ridge, X_test, y_test
+        )
 
         # Lasso with CV
         best_lasso_alpha, _ = self.cv_select_alpha(X_train, y_train, "lasso", alphas)
         lasso = self.train_lasso_regression(X_train, y_train, alpha=best_lasso_alpha)
-        results[f"Lasso (λ={best_lasso_alpha:.4f})"] = self.evaluate_model(lasso, X_test, y_test)
+        results[f"Lasso (λ={best_lasso_alpha:.4f})"] = self.evaluate_model(
+            lasso, X_test, y_test
+        )
 
         # ElasticNet (default alpha/l1_ratio)
         elasticnet = self.train_elasticnet_regression(X_train, y_train)
@@ -327,11 +331,13 @@ class ModelComparison:
 
             if not np.isfinite(max_vif) or max_vif > threshold:
                 feature_to_remove = selected_features[max_idx]
-                removed_features.append({
-                    "feature": feature_to_remove,
-                    "VIF": max_vif,
-                    "removed": True,
-                })
+                removed_features.append(
+                    {
+                        "feature": feature_to_remove,
+                        "VIF": max_vif,
+                        "removed": True,
+                    }
+                )
                 selected_features.pop(max_idx)
 
                 if iterative:
@@ -340,12 +346,14 @@ class ModelComparison:
             break
 
         final_vif_values = vif(X_train[selected_features].to_numpy(dtype=float))
-        final_vif_table = pd.DataFrame({
-            "feature": selected_features,
-            "VIF": final_vif_values,
-            "High Multicollinearity": final_vif_values > threshold,
-            "removed": False,
-        })
+        final_vif_table = pd.DataFrame(
+            {
+                "feature": selected_features,
+                "VIF": final_vif_values,
+                "High Multicollinearity": final_vif_values > threshold,
+                "removed": False,
+            }
+        )
 
         if removed_features:
             removed_table = pd.DataFrame(removed_features)
@@ -382,9 +390,11 @@ class ModelComparison:
         else:
             X_test_arr = np.asarray(X_test, dtype=float)
             selected_indices = [
-                X_train.columns.get_loc(feature)
-                if isinstance(X_train, pd.DataFrame)
-                else int(feature)
+                (
+                    X_train.columns.get_loc(feature)
+                    if isinstance(X_train, pd.DataFrame)
+                    else int(feature)
+                )
                 for feature in selected_features
             ]
             X_test_selected = X_test_arr[:, selected_indices]
@@ -401,9 +411,7 @@ class ModelComparison:
             "X_test_selected": X_test_selected,
             "feature_names_selected": selected_features,
             "vif_table": vif_table,
-            "removed_features": vif_table.loc[
-                vif_table["removed"], "feature"
-            ].tolist(),
+            "removed_features": vif_table.loc[vif_table["removed"], "feature"].tolist(),
         }
 
         return metrics_df, selection_info
@@ -423,8 +431,8 @@ class ModelComparison:
             A formatted summary string of the results.
         """
         best_rmse = metrics_df["RMSE"].idxmin()
-        best_r2   = metrics_df["R2_test"].idxmax()
-        best_mae  = metrics_df["MAE"].idxmin()
+        best_r2 = metrics_df["R2_test"].idxmax()
+        best_mae = metrics_df["MAE"].idxmin()
 
         lines = [
             "=" * 50,
@@ -471,10 +479,7 @@ class OLSBaseline:
         n = X_train.shape[0]
 
         # augmented matrix with intercept
-        self.X_train = np.column_stack([
-            np.ones(n),
-            X_train
-        ])
+        self.X_train = np.column_stack([np.ones(n), X_train])
 
         # ols_fit internally adds intercept
         self.beta_hat, self.sigma2_hat = ols_fit(
@@ -482,13 +487,9 @@ class OLSBaseline:
             y_train,
         )
 
-        self.y_train_pred = (
-            self.X_train @ self.beta_hat
-        )
+        self.y_train_pred = self.X_train @ self.beta_hat
 
-        self.residuals = (
-            y_train - self.y_train_pred
-        )
+        self.residuals = y_train - self.y_train_pred
 
         return self
 
@@ -498,10 +499,7 @@ class OLSBaseline:
 
         n = X.shape[0]
 
-        X_aug = np.column_stack([
-            np.ones(n),
-            X
-        ])
+        X_aug = np.column_stack([np.ones(n), X])
 
         return X_aug @ self.beta_hat
 
@@ -512,9 +510,7 @@ class OLSBaseline:
             dtype=float,
         )
 
-        self.y_test_pred = self.predict(
-            X_test
-        )
+        self.y_test_pred = self.predict(X_test)
 
         metrics = model_metrics(
             y_test,
@@ -532,9 +528,7 @@ class OLSBaseline:
 
     def run_inference(self, feature_names):
         """Compute coefficient inference statistics."""
-        feature_names = [
-            "Intercept"
-        ] + list(feature_names)
+        feature_names = ["Intercept"] + list(feature_names)
 
         result = coef_inference(
             self.X_train,
@@ -543,15 +537,17 @@ class OLSBaseline:
             self.sigma2_hat,
         )
 
-        self.inference_table = pd.DataFrame({
-            "feature": feature_names,
-            "coefficient": self.beta_hat,
-            "std_error": result["standard_errors"],
-            "t_stat": result["t_statistics"],
-            "p_value": result["p_values"],
-            "ci_lower": result["ci_lower"],
-            "ci_upper": result["ci_upper"],
-        })
+        self.inference_table = pd.DataFrame(
+            {
+                "feature": feature_names,
+                "coefficient": self.beta_hat,
+                "std_error": result["standard_errors"],
+                "t_stat": result["t_statistics"],
+                "p_value": result["p_values"],
+                "ci_lower": result["ci_lower"],
+                "ci_upper": result["ci_upper"],
+            }
+        )
 
         return self.inference_table
 
@@ -562,17 +558,15 @@ class OLSBaseline:
         vif_scores = []
 
         for feature, vif_value in zip(feature_names, vif_values):
-            vif_scores.append({
-                "feature": feature,
-                "VIF": vif_value,
-                "High Multicollinearity": (
-                    vif_value > 10
-                ),
-            })
+            vif_scores.append(
+                {
+                    "feature": feature,
+                    "VIF": vif_value,
+                    "High Multicollinearity": (vif_value > 10),
+                }
+            )
 
-        self.vif_table = pd.DataFrame(
-            vif_scores
-        )
+        self.vif_table = pd.DataFrame(vif_scores)
 
         return self.vif_table
 
@@ -587,7 +581,7 @@ class OLSBaseline:
 
 class OLSWithVariables(OLSBaseline):
     """OLS baseline with VIF-based variable selection before fitting."""
-    
+
     def __init__(self, vif_threshold=10.0, random_state=42):
         super().__init__(random_state=random_state)
         self.vif_threshold = vif_threshold
@@ -614,9 +608,7 @@ class OLSWithVariables(OLSBaseline):
         self.feature_indices_selected = [
             X_df.columns.get_loc(feature) for feature in selected_features
         ]
-        self.removed_features = vif_table.loc[
-            vif_table["removed"], "feature"
-        ].tolist()
+        self.removed_features = vif_table.loc[vif_table["removed"], "feature"].tolist()
         self.selection_vif_table = vif_table
 
         return X_selected, selected_features, vif_table
