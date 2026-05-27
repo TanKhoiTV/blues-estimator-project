@@ -33,6 +33,7 @@ from part1.ridge_lasso import (
     plot_ridge_trace,
 )
 
+
 class ModelComparison:
     """
     Trains and compares multiple regression models.
