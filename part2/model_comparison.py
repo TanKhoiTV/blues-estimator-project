@@ -188,6 +188,9 @@ class ModelComparison:
         if alphas is None:
             alphas = np.logspace(-3, 3, 100)
 
+        if model_type not in {"ridge", "lasso"}:
+            raise ValueError("model_type must be either 'ridge' or 'lasso'")
+
         X_arr = np.asarray(X_train, dtype=float)
         y_arr = np.asarray(y_train, dtype=float)
 
@@ -204,6 +207,7 @@ class ModelComparison:
                     beta = ridge_fit(X_tr, y_tr, lam=alpha)
                     X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
                     y_pred = X_val_aug @ beta
+
                 else:
                     m = Lasso(alpha=alpha, random_state=42, max_iter=10000)
                     m.fit(X_tr, y_tr)
@@ -433,7 +437,6 @@ class OLSBaseline:
 
     def __init__(self, random_state=42):
         self.random_state = random_state
-        np.random.seed(self.random_state)
 
         self.beta_hat = None
         self.sigma2_hat = None
@@ -487,6 +490,7 @@ class OLSBaseline:
 
     def evaluate(self, X_test, y_test):
         """Evaluate on held-out test set."""
+        X_test = np.asarray(X_test, dtype=float)
         y_test = np.asarray(
             y_test,
             dtype=float,
@@ -494,16 +498,10 @@ class OLSBaseline:
 
         self.y_test_pred = self.predict(X_test)
 
-        metrics = model_metrics(
-            y_test,
-            self.y_test_pred,
-            p=X_test.shape[1],
-        )
-
         self.metrics = {
-            "MAE": metrics["MAE"],
-            "RMSE": metrics["RMSE"],
-            "R2_test": metrics["R2"],
+            "MAE": mean_absolute_error(y_test, self.y_test_pred),
+            "RMSE": np.sqrt(mean_squared_error(y_test, self.y_test_pred)),
+            "R2_test": r2_score(y_test, self.y_test_pred),
         }
 
         return self.metrics
