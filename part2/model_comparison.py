@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-from sklearn.linear_model import Ridge, Lasso, ElasticNet
+from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
 from sklearn.metrics import (
     mean_absolute_error,
@@ -28,13 +28,16 @@ from part1.ols_implementation import (
 
 from part1.residual_analysis import residual_plots
 
+from part1.ridge_lasso import (
+    ridge_fit,
+    plot_ridge_trace,
+)
 
 class ModelComparison:
     """
     Trains and compares multiple regression models.
 
-    Supports Linear Regression, Ridge Regression, Lasso Regression,
-    and ElasticNet Regression.
+    Supports Linear Regression, Ridge Regression, Lasso Regression.
     """
 
     def __init__(self) -> None:
@@ -81,9 +84,15 @@ class ModelComparison:
         Any
             The trained Ridge Regression model instance.
         """
-        model = Ridge(alpha=alpha, random_state=42)
-        model.fit(X_train, y_train)
-        return model
+        X = X_train.values
+        y = y_train.values
+
+        beta_hat = ridge_fit(X, y, lam=alpha)
+
+        return {
+            "beta_hat": beta_hat,
+            "type": "ridge",
+        }
 
     def train_lasso_regression(
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
@@ -106,38 +115,6 @@ class ModelComparison:
             The trained Lasso Regression model instance.
         """
         model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_train, y_train)
-        return model
-
-    def train_elasticnet_regression(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        alpha: float = 1.0,
-        l1_ratio: float = 0.5,
-    ) -> Any:
-        """
-        Train an ElasticNet Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Constant that multiplies the penalty terms (default is 1.0).
-        l1_ratio : float, optional
-            The ElasticNet mixing parameter (default is 0.5).
-
-        Returns
-        -------
-        Any
-            The trained ElasticNet Regression model instance.
-        """
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
-        )
         model.fit(X_train, y_train)
         return model
 
@@ -165,7 +142,13 @@ class ModelComparison:
         if isinstance(model, OLSBaseline):
             return model.evaluate(X_test, y_test)
 
-        y_pred = model.predict(X_test)
+        if isinstance(model, dict) and model.get("type") == "ridge":
+            X = X_test.values
+            X_aug = np.column_stack([np.ones(len(X)), X])
+            y_pred = X_aug @ model["beta_hat"]
+        else:
+            y_pred = model.predict(X_test)
+
         return {
             "MAE": mean_absolute_error(y_test, y_pred),
             "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
@@ -217,12 +200,14 @@ class ModelComparison:
                 y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
 
                 if model_type == "ridge":
-                    m = Ridge(alpha=alpha, random_state=42)
+                    beta = ridge_fit(X_tr, y_tr, lam=alpha)
+                    X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
+                    y_pred = X_val_aug @ beta
                 else:
                     m = Lasso(alpha=alpha, random_state=42, max_iter=10000)
+                    m.fit(X_tr, y_tr)
+                    y_pred = m.predict(X_val)
 
-                m.fit(X_tr, y_tr)
-                y_pred = m.predict(X_val)
                 fold_mses.append(mean_squared_error(y_val, y_pred))
 
             mean_mses.append(np.mean(fold_mses))
@@ -303,10 +288,6 @@ class ModelComparison:
         results[f"Lasso (λ={best_lasso_alpha:.4f})"] = self.evaluate_model(
             lasso, X_test, y_test
         )
-
-        # ElasticNet (default alpha/l1_ratio)
-        elasticnet = self.train_elasticnet_regression(X_train, y_train)
-        results["ElasticNet"] = self.evaluate_model(elasticnet, X_test, y_test)
 
         return pd.DataFrame(results).T
 
