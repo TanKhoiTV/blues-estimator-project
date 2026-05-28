@@ -163,6 +163,9 @@ class ModelComparison:
         y_arr = np.asarray(y_train, dtype=float)
         n_samples = X_arr.shape[0]
 
+        if k < 2 or k > n_samples:
+            raise ValueError(f"k must be between 2 and {n_samples}, got {k}")
+
         indices = np.arange(n_samples)
         rng = np.random.RandomState(42)
         rng.shuffle(indices)
