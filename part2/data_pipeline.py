@@ -87,7 +87,7 @@ class DataPipeline:
         """
         X = X.copy()
 
-        # Detect numerical and categorical columns
+        # Phân loại các cột số và cột phân loại
         self.numeric_columns_ = X.select_dtypes(
             include=["int64", "float64"]
         ).columns.tolist()
@@ -96,16 +96,25 @@ class DataPipeline:
             include=["object", "category", "string"]
         ).columns.tolist()
 
-        # Learn statistics for numerical columns
+        # Học tri thức điền khuyết cho biến SES
+        if "SES" in X.columns and "EDUC" in X.columns:
+            # 1. Lưu Yếu vị tổng thể (Global Mode) để dự phòng
+            mode_ses = X["SES"].mode(dropna=True)
+            self.ses_global_mode_ = mode_ses[0] if not mode_ses.empty else 2.0
+
+            # 2. Học từ điển Trung vị SES theo từng năm học vấn (EDUC)
+            self.ses_educ_medians_ = X.groupby("EDUC")["SES"].median().to_dict()
+
+        # Học thống kê (Mean, Std) cho các cột số cơ bản
         for col in self.numeric_columns_:
             self.numeric_means_[col] = X[col].mean()
             self.numeric_stds_[col] = X[col].std()
 
-            # Prevent division by zero
+            # Ngăn chặn lỗi chia cho 0 khi tiến hành scale
             if self.numeric_stds_[col] == 0:
                 self.numeric_stds_[col] = 1
 
-        # Learn categorical mappings
+        # Học thống kê (Unique values, Mode) cho các biến phân loại
         for col in self.categorical_columns_:
             self.categorical_values_[col] = X[col].dropna().unique().tolist()
             mode = X[col].mode(dropna=True)
@@ -127,13 +136,30 @@ class DataPipeline:
         """
         df = df.copy()
 
-        # Numerical columns -> mean imputation
-        for col in self.numeric_columns_:
-            df[col] = df[col].fillna(self.numeric_means_[col])
+        # Tính trung vị toàn cục của SES phòng trường hợp khẩn cấp
+        global_ses_median = df["SES"].median() if "SES" in df.columns else 3.0
+        if pd.isna(global_ses_median):
+            global_ses_median = (
+                3.0  # Giá trị mặc định an toàn nếu toàn bộ cột SES trống
+            )
 
-        # Categorical columns -> mode imputation
-        for col in self.categorical_columns_:
-            df[col] = df[col].fillna(self.categorical_modes_[col])
+        if "SES" in df.columns and "EDUC" in df.columns:
+            # Điền khuyết theo nhóm EDUC
+            for idx, row in df[df["SES"].isna()].iterrows():
+                educ_val = row["EDUC"]
+                # Lấy trung vị theo nhóm EDUC đã học từ tập Train
+                group_median = self.categorical_values_.get("ses_by_educ", {}).get(
+                    educ_val
+                )
+
+                # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
+                if pd.isna(group_median):
+                    df.at[idx, "SES"] = global_ses_median
+                else:
+                    df.at[idx, "SES"] = group_median
+
+            # Ép kiểu an toàn sau khi đã đảm bảo sạch bóng NaN
+            df["SES"] = df["SES"].astype(int)
 
         return df
 
@@ -220,7 +246,7 @@ class DataPipeline:
 
         X = self.encode_categorical(X)
 
-        X = self.scale_features(X)
+        # X = self.scale_features(X)
 
         return X
 
@@ -282,34 +308,31 @@ class DataPipeline:
         return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
     def preprocess(
-        self, file_path: str, target_column: str
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-        """
-        Execute the full preprocessing pipeline.
-
-        Parameters
-        ----------
-        file_path : str
-            Path to the dataset file.
-
-        target_column : str
-            Name of the target column.
-
-        Returns
-        -------
-        tuple
-            Preprocessed training features,
-            testing features,
-            training labels,
-            and testing labels.
-        """
-        # Load dataset
+        self, file_path: str, target_column: str, split: bool = True
+    ) -> Tuple:
+        """Thực thi đường ống tiền xử lý dữ liệu với cơ chế kiểm tra nghiêm ngặt."""
+        # Load dataset & Remove duplicates
         df = self.load_dataset(file_path)
-
-        # Remove duplicates
         df = self.remove_duplicates(df)
 
-        # Split BEFORE fitting to avoid leakage
+        # Xóa các dòng bị khuyết biến mục tiêu (MMSE)
+        df = df.dropna(subset=[target_column])
+
+        # Các cột bắt buộc cần có cho mô hình OLS cơ sở
+        required_columns = ["nWBV", "Age", "EDUC", "SES", target_column]
+
+        # Kiểm tra xem có bị thiếu cột cấu trúc nào không
+        missing_cols = [col for col in required_columns if col not in df.columns]
+        if missing_cols:
+            raise ValueError(
+                f"Lỗi cấu trúc dữ liệu: File CSV đầu vào thiếu các cột bắt buộc sau: {missing_cols}. "
+                f"Không thể tiếp tục tiền xử lý luồng OLS."
+            )
+
+        # Giữ lại đúng các cột quy chuẩn
+        df = df[required_columns]
+
+        # (Chia Train/Test để chống Leakage)
         X_train, X_test, y_train, y_test = self.split_data(df, target_column)
 
         # Learn parameters ONLY from training data
@@ -317,7 +340,6 @@ class DataPipeline:
 
         # Transform train and test
         X_train = self.transform(X_train)
-
         X_test = self.transform(X_test)
 
         return X_train, X_test, y_train, y_test
