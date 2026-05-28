@@ -11,8 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-from sklearn.linear_model import Lasso
-from sklearn.model_selection import KFold
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -38,7 +36,7 @@ class ModelComparison:
     """
     Trains and compares multiple regression models.
 
-    Supports Linear Regression, Ridge Regression, Lasso Regression.
+    Supports Linear Regression, Ridge Regression.
     """
 
     def __init__(self) -> None:
@@ -95,30 +93,6 @@ class ModelComparison:
             "type": "ridge",
         }
 
-    def train_lasso_regression(
-        self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
-    ) -> Any:
-        """
-        Train a Lasso Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Regularization strength (default is 1.0).
-
-        Returns
-        -------
-        Any
-            The trained Lasso Regression model instance.
-        """
-        model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_train, y_train)
-        return model
-
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
     ) -> Dict[str, float]:
@@ -144,7 +118,7 @@ class ModelComparison:
             return model.evaluate(X_test, y_test)
 
         if isinstance(model, dict) and model.get("type") == "ridge":
-            X = X_test.values
+            X = np.asarray(X_test, dtype=float)
             X_aug = np.column_stack([np.ones(len(X)), X])
             y_pred = X_aug @ model["beta_hat"]
         else:
@@ -160,7 +134,6 @@ class ModelComparison:
         self,
         X_train: pd.DataFrame,
         y_train: pd.Series,
-        model_type: str = "ridge",
         alphas=None,
         k: int = 5,
     ) -> tuple:
@@ -173,8 +146,6 @@ class ModelComparison:
             The training feature data.
         y_train : pd.Series
             The training target data.
-        model_type : str
-            Either 'ridge' or 'lasso'.
         alphas : array-like, optional
             Candidate alpha values. Defaults to log-spaced values.
         k : int
@@ -188,30 +159,30 @@ class ModelComparison:
         if alphas is None:
             alphas = np.logspace(-3, 3, 100)
 
-        if model_type not in {"ridge", "lasso"}:
-            raise ValueError("model_type must be either 'ridge' or 'lasso'")
-
         X_arr = np.asarray(X_train, dtype=float)
         y_arr = np.asarray(y_train, dtype=float)
+        n_samples = X_arr.shape[0]
 
-        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+        indices = np.arange(n_samples)
+        rng = np.random.RandomState(42)
+        rng.shuffle(indices)
+        folds = np.array_split(indices, k)
+
         mean_mses = []
 
         for alpha in alphas:
             fold_mses = []
-            for train_idx, val_idx in kf.split(X_arr):
+
+            for i in range(k):
+                val_idx = folds[i]
+                train_idx = np.concatenate([folds[j] for j in range(k) if j != i])
+
                 X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
                 y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
 
-                if model_type == "ridge":
-                    beta = ridge_fit(X_tr, y_tr, lam=alpha)
-                    X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
-                    y_pred = X_val_aug @ beta
-
-                else:
-                    m = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-                    m.fit(X_tr, y_tr)
-                    y_pred = m.predict(X_val)
+                beta = ridge_fit(X_tr, y_tr, lam=alpha)
+                X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
+                y_pred = X_val_aug @ beta
 
                 fold_mses.append(mean_squared_error(y_val, y_pred))
 
@@ -281,17 +252,10 @@ class ModelComparison:
         results["OLS"] = self.evaluate_model(ols, X_test, y_test)
 
         # Ridge with CV
-        best_ridge_alpha, _ = self.cv_select_alpha(X_train, y_train, "ridge", alphas)
+        best_ridge_alpha, _ = self.cv_select_alpha(X_train, y_train, alphas)
         ridge = self.train_ridge_regression(X_train, y_train, alpha=best_ridge_alpha)
         results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(
             ridge, X_test, y_test
-        )
-
-        # Lasso with CV
-        best_lasso_alpha, _ = self.cv_select_alpha(X_train, y_train, "lasso", alphas)
-        lasso = self.train_lasso_regression(X_train, y_train, alpha=best_lasso_alpha)
-        results[f"Lasso (λ={best_lasso_alpha:.4f})"] = self.evaluate_model(
-            lasso, X_test, y_test
         )
 
         return pd.DataFrame(results).T
