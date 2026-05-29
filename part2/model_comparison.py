@@ -11,7 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-from sklearn.linear_model import Lasso, ElasticNet
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -37,8 +36,7 @@ class ModelComparison:
     """
     Trains and compares multiple regression models.
 
-    Supports Linear Regression, Ridge Regression, Lasso Regression,
-    and ElasticNet Regression.
+    Supports Linear Regression, Ridge Regression.
     """
 
     def __init__(self) -> None:
@@ -94,62 +92,6 @@ class ModelComparison:
             "beta_hat": beta_hat,
             "type": "ridge",
         }
-
-    def train_lasso_regression(
-        self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
-    ) -> Any:
-        """
-        Train a Lasso Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Regularization strength (default is 1.0).
-
-        Returns
-        -------
-        Any
-            The trained Lasso Regression model instance.
-        """
-        model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_train, y_train)
-        return model
-
-    def train_elasticnet_regression(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        alpha: float = 1.0,
-        l1_ratio: float = 0.5,
-    ) -> Any:
-        """
-        Train an ElasticNet Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Constant that multiplies the penalty terms (default is 1.0).
-        l1_ratio : float, optional
-            The ElasticNet mixing parameter (default is 0.5).
-
-        Returns
-        -------
-        Any
-            The trained ElasticNet Regression model instance.
-        """
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
-        )
-        model.fit(X_train, y_train)
-        return model
 
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
@@ -318,14 +260,6 @@ class ModelComparison:
         results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(
             ridge, X_test, y_test
         )
-
-        # Lasso with CV (using sklearn — no from-scratch lasso exists)
-        lasso = self.train_lasso_regression(X_train, y_train)
-        results["Lasso (α=1.0)"] = self.evaluate_model(lasso, X_test, y_test)
-
-        # ElasticNet (using sklearn — no from-scratch elasticnet exists)
-        elasticnet = self.train_elasticnet_regression(X_train, y_train)
-        results["ElasticNet"] = self.evaluate_model(elasticnet, X_test, y_test)
 
         return pd.DataFrame(results).T
 
