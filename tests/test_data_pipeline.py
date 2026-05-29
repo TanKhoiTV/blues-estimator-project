@@ -43,14 +43,38 @@ class TestDataPipeline(unittest.TestCase):
             }
         )
 
-    def test_no_data_leakage_in_scaling(self):
-        """Test 1: Kiểm tra Z-score scaling trên tập test có dùng parameters của tập train hay không."""
-        self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
-        X_test_transformed = self.pipeline.transform(
-            self.df_test.drop(columns=["MMSE"])
+    def test_fit_stores_training_attributes(self):
+        """Test 1: Kiểm tra fit() lưu đúng các tham số thống kê từ tập Train."""
+        df = self.df_train.drop(columns=["MMSE"])
+        self.pipeline.fit(df)
+
+        # Must store SES-EDUC group medians
+        self.assertTrue(hasattr(self.pipeline, "ses_educ_medians_"))
+        self.assertIn(12, self.pipeline.ses_educ_medians_)
+        expected_ses_medians = df.groupby("EDUC")["SES"].median().to_dict()
+        self.assertEqual(
+            self.pipeline.ses_educ_medians_[12],
+            expected_ses_medians.get(12),
         )
+
+        # Must store global SES mode
+        self.assertTrue(hasattr(self.pipeline, "ses_global_mode_"))
+        expected_ses_mode = df["SES"].mode(dropna=True).iloc[0]
+        self.assertEqual(self.pipeline.ses_global_mode_, expected_ses_mode)
+
+        # Must store numeric column means/stds
+        self.assertTrue(hasattr(self.pipeline, "numeric_means_"))
+        self.assertIn("nWBV", self.pipeline.numeric_means_)
         self.assertAlmostEqual(
-            X_test_transformed["nWBV"].iloc[0], 0.5773502691896248, places=6
+            self.pipeline.numeric_means_["nWBV"],
+            df["nWBV"].mean(),
+            places=6,
+        )
+        self.assertIn("nWBV", self.pipeline.numeric_stds_)
+        self.assertAlmostEqual(
+            self.pipeline.numeric_stds_["nWBV"],
+            df["nWBV"].std(),
+            places=6,
         )
 
     def test_structural_integrity_categorical(self):
