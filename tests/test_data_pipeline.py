@@ -45,18 +45,37 @@ class TestDataPipeline(unittest.TestCase):
 
     def test_fit_stores_training_attributes(self):
         """Test 1: Kiểm tra fit() lưu đúng các tham số thống kê từ tập Train."""
-        self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
+        df = self.df_train.drop(columns=["MMSE"])
+        self.pipeline.fit(df)
 
         # Must store SES-EDUC group medians
         self.assertTrue(hasattr(self.pipeline, "ses_educ_medians_"))
         self.assertIn(12, self.pipeline.ses_educ_medians_)
+        expected_ses_medians = df.groupby("EDUC")["SES"].median().to_dict()
+        self.assertEqual(
+            self.pipeline.ses_educ_medians_[12],
+            expected_ses_medians.get(12),
+        )
 
         # Must store global SES mode
         self.assertTrue(hasattr(self.pipeline, "ses_global_mode_"))
+        expected_ses_mode = df["SES"].mode(dropna=True).iloc[0]
+        self.assertEqual(self.pipeline.ses_global_mode_, expected_ses_mode)
 
         # Must store numeric column means/stds
         self.assertTrue(hasattr(self.pipeline, "numeric_means_"))
         self.assertIn("nWBV", self.pipeline.numeric_means_)
+        self.assertAlmostEqual(
+            self.pipeline.numeric_means_["nWBV"],
+            df["nWBV"].mean(),
+            places=6,
+        )
+        self.assertIn("nWBV", self.pipeline.numeric_stds_)
+        self.assertAlmostEqual(
+            self.pipeline.numeric_stds_["nWBV"],
+            df["nWBV"].std(),
+            places=6,
+        )
 
     def test_structural_integrity_categorical(self):
         """Test 2: Kiểm tra tính toàn vẹn cấu trúc cột sau khi xử lý dữ liệu qua Pipeline.

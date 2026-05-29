@@ -91,6 +91,7 @@ class ModelComparison:
             A dict with ``"beta_hat"``, ``"type"``, and scaler parameters
             for use by ``evaluate_model``.
         """
+        feature_names = list(X_train.columns)
         X = np.asarray(X_train, dtype=float)
         y = np.asarray(y_train, dtype=float)
 
@@ -105,6 +106,7 @@ class ModelComparison:
             "type": "ridge",
             "feature_means": feature_means,
             "feature_stds": feature_stds,
+            "feature_names": feature_names,
         }
 
     def train_lasso_regression(
@@ -142,6 +144,7 @@ class ModelComparison:
             "model": model,
             "type": "lasso",
             "scaler": scaler,
+            "feature_names": list(X_train.columns),
         }
 
     def train_elasticnet_regression(
@@ -187,6 +190,7 @@ class ModelComparison:
             "model": model,
             "type": "elasticnet",
             "scaler": scaler,
+            "feature_names": list(X_train.columns),
         }
 
     def evaluate_model(
@@ -218,6 +222,11 @@ class ModelComparison:
             return model.evaluate(X_test, y_test)
 
         if isinstance(model, dict):
+            # Align columns when X_test is a DataFrame (defensive against
+            # column-order mismatch or missing/extra columns vs. training).
+            if "feature_names" in model and hasattr(X_test, "columns"):
+                X_test = X_test.reindex(columns=model["feature_names"])
+
             X = np.asarray(X_test, dtype=float)
 
             if model.get("type") == "ridge":
