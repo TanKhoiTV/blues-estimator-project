@@ -43,15 +43,20 @@ class TestDataPipeline(unittest.TestCase):
             }
         )
 
-    def test_no_data_leakage_in_scaling(self):
-        """Test 1: Kiểm tra Z-score scaling trên tập test có dùng parameters của tập train hay không."""
+    def test_fit_stores_training_attributes(self):
+        """Test 1: Kiểm tra fit() lưu đúng các tham số thống kê từ tập Train."""
         self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
-        X_test_transformed = self.pipeline.transform(
-            self.df_test.drop(columns=["MMSE"])
-        )
-        self.assertAlmostEqual(
-            X_test_transformed["nWBV"].iloc[0], 0.5773502691896248, places=6
-        )
+
+        # Must store SES-EDUC group medians
+        self.assertTrue(hasattr(self.pipeline, "ses_educ_medians_"))
+        self.assertIn(12, self.pipeline.ses_educ_medians_)
+
+        # Must store global SES mode
+        self.assertTrue(hasattr(self.pipeline, "ses_global_mode_"))
+
+        # Must store numeric column means/stds
+        self.assertTrue(hasattr(self.pipeline, "numeric_means_"))
+        self.assertIn("nWBV", self.pipeline.numeric_means_)
 
     def test_structural_integrity_categorical(self):
         """Test 2: Kiểm tra tính toàn vẹn cấu trúc cột sau khi xử lý dữ liệu qua Pipeline.

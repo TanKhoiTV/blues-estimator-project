@@ -17,6 +17,7 @@ from sklearn.metrics import (
     mean_squared_error,
     r2_score,
 )
+from sklearn.preprocessing import StandardScaler
 
 from part1.ols_implementation import (
     ols_fit,
@@ -69,7 +70,11 @@ class ModelComparison:
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
     ) -> Any:
         """
-        Train a Ridge Regression model.
+        Train a Ridge Regression model with internal Z-score scaling.
+
+        Scales features internally so the L2 penalty is applied uniformly
+        regardless of the original feature scales, while keeping the pipeline
+        free to pass raw (unscaled) data.
 
         Parameters
         ----------
@@ -83,23 +88,34 @@ class ModelComparison:
         Returns
         -------
         Any
-            The trained Ridge Regression model instance.
+            A dict with ``"beta_hat"``, ``"type"``, and scaler parameters
+            for use by ``evaluate_model``.
         """
-        X = X_train.values
-        y = y_train.values
+        X = np.asarray(X_train, dtype=float)
+        y = np.asarray(y_train, dtype=float)
 
-        beta_hat = ridge_fit(X, y, lam=alpha)
+        feature_means = np.mean(X, axis=0)
+        feature_stds = np.std(X, axis=0) + 1e-8
+        X_scaled = (X - feature_means) / feature_stds
+
+        beta_hat = ridge_fit(X_scaled, y, lam=alpha)
 
         return {
             "beta_hat": beta_hat,
             "type": "ridge",
+            "feature_means": feature_means,
+            "feature_stds": feature_stds,
         }
 
     def train_lasso_regression(
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
     ) -> Any:
         """
-        Train a Lasso Regression model.
+        Train a Lasso Regression model with internal Z-score scaling.
+
+        Scales features internally via ``StandardScaler`` and stores the
+        scaler alongside the fitted model so ``evaluate_model`` can apply
+        the same transformation on test data.
 
         Parameters
         ----------
@@ -113,11 +129,20 @@ class ModelComparison:
         Returns
         -------
         Any
-            The trained Lasso Regression model instance.
+            A dict with ``"model"``, ``"type"``, and ``"scaler"`` for use
+            by ``evaluate_model``.
         """
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(np.asarray(X_train, dtype=float))
+
         model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_train, y_train)
-        return model
+        model.fit(X_scaled, y_train)
+
+        return {
+            "model": model,
+            "type": "lasso",
+            "scaler": scaler,
+        }
 
     def train_elasticnet_regression(
         self,
@@ -127,7 +152,11 @@ class ModelComparison:
         l1_ratio: float = 0.5,
     ) -> Any:
         """
-        Train an ElasticNet Regression model.
+        Train an ElasticNet Regression model with internal Z-score scaling.
+
+        Scales features internally via ``StandardScaler`` and stores the
+        scaler alongside the fitted model so ``evaluate_model`` can apply
+        the same transformation on test data.
 
         Parameters
         ----------
@@ -143,13 +172,22 @@ class ModelComparison:
         Returns
         -------
         Any
-            The trained ElasticNet Regression model instance.
+            A dict with ``"model"``, ``"type"``, and ``"scaler"`` for use
+            by ``evaluate_model``.
         """
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(np.asarray(X_train, dtype=float))
+
         model = ElasticNet(
             alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
         )
-        model.fit(X_train, y_train)
-        return model
+        model.fit(X_scaled, y_train)
+
+        return {
+            "model": model,
+            "type": "elasticnet",
+            "scaler": scaler,
+        }
 
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
@@ -157,10 +195,14 @@ class ModelComparison:
         """
         Evaluate a trained model on testing data.
 
+        Applies the same scaling that was used during training (stored in
+        the model dict) before predicting, so the model receives data in
+        the same space it was trained on.
+
         Parameters
         ----------
         model : Any
-            The trained regression model.
+            The trained regression model (or dict with scaler info).
         X_test : pd.DataFrame
             The testing feature data.
         y_test : pd.Series
@@ -171,14 +213,24 @@ class ModelComparison:
         dict of str to float
             A dictionary containing evaluation metrics (MAE, RMSE, R2).
         """
-        # OLSBaseline uses its own evaluate() method
+        # OLSBaseline uses its own evaluate() method (raw/unscaled data)
         if isinstance(model, OLSBaseline):
             return model.evaluate(X_test, y_test)
 
-        if isinstance(model, dict) and model.get("type") == "ridge":
+        if isinstance(model, dict):
             X = np.asarray(X_test, dtype=float)
-            X_aug = np.column_stack([np.ones(len(X)), X])
-            y_pred = X_aug @ model["beta_hat"]
+
+            if model.get("type") == "ridge":
+                # Ridge from-scratch: scale test data with training params
+                X_scaled = (X - model["feature_means"]) / model["feature_stds"]
+                X_aug = np.column_stack([np.ones(len(X_scaled)), X_scaled])
+                y_pred = X_aug @ model["beta_hat"]
+            elif "scaler" in model:
+                # Lasso / ElasticNet via sklearn: use stored StandardScaler
+                X_scaled = model["scaler"].transform(X)
+                y_pred = model["model"].predict(X_scaled)
+            else:
+                y_pred = model.predict(X_test)
         else:
             y_pred = model.predict(X_test)
 
@@ -197,6 +249,10 @@ class ModelComparison:
     ) -> tuple:
         """
         Select the optimal alpha via k-fold cross-validation.
+
+        Scales each training fold using its own mean/std (to prevent data
+        leakage across folds) so that Ridge regularization is applied
+        uniformly regardless of the original feature scales.
 
         Parameters
         ----------
@@ -229,18 +285,28 @@ class ModelComparison:
         rng.shuffle(indices)
         folds = np.array_split(indices, k)
 
+        # Pre-scale each fold's training set independently (no data leakage)
+        fold_data = []
+        for i in range(k):
+            val_idx = folds[i]
+            train_idx = np.concatenate([folds[j] for j in range(k) if j != i])
+
+            X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
+            y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
+
+            fold_mean = np.mean(X_tr, axis=0)
+            fold_std = np.std(X_tr, axis=0) + 1e-8
+            X_tr_scaled = (X_tr - fold_mean) / fold_std
+            X_val_scaled = (X_val - fold_mean) / fold_std
+
+            fold_data.append((X_tr_scaled, y_tr, X_val_scaled, y_val))
+
         mean_mses = []
 
         for alpha in alphas:
             fold_mses = []
 
-            for i in range(k):
-                val_idx = folds[i]
-                train_idx = np.concatenate([folds[j] for j in range(k) if j != i])
-
-                X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
-                y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
-
+            for X_tr, y_tr, X_val, y_val in fold_data:
                 beta = ridge_fit(X_tr, y_tr, lam=alpha)
                 X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
                 y_pred = X_val_aug @ beta
