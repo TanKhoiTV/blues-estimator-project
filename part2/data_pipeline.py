@@ -244,7 +244,7 @@ class DataPipeline:
 
         X = self.encode_categorical(X)
 
-        X = self.scale_features(X)
+        # X = self.scale_features(X)
 
         return X
 

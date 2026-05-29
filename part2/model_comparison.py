@@ -2,7 +2,7 @@
 Model Comparison Module.
 
 This module provides the ModelComparison class to train, evaluate,
-and compare multiple regression models.
+and compare OLS and Ridge regression models.
 """
 
 from typing import Dict, Any, List, Tuple
@@ -11,7 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-from sklearn.linear_model import Lasso, ElasticNet
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -34,33 +33,14 @@ from part1.ridge_lasso import (
 
 
 class ModelComparison:
-    """
-    Trains and compares multiple regression models.
-
-    Supports Linear Regression, Ridge Regression, Lasso Regression,
-    and ElasticNet Regression.
-    """
+    """Trains and compares OLS and Ridge regression models."""
 
     def __init__(self) -> None:
         """Initialize the ModelComparison object."""
         pass
 
     def train_linear_regression(self, X_train: pd.DataFrame, y_train: pd.Series) -> Any:
-        """
-        Train a Linear Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-
-        Returns
-        -------
-        Any
-            The trained Linear Regression model instance.
-        """
+        """Train a Linear Regression model using raw values."""
         model = OLSBaseline()
         model.fit(X_train, y_train)
         return model
@@ -68,116 +48,38 @@ class ModelComparison:
     def train_ridge_regression(
         self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
     ) -> Any:
-        """
-        Train a Ridge Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Regularization strength (default is 1.0).
-
-        Returns
-        -------
-        Any
-            The trained Ridge Regression model instance.
-        """
+        """Train a Ridge Regression model with manual internal Z-score scaling."""
         X = X_train.values
         y = y_train.values
 
-        beta_hat = ridge_fit(X, y, lam=alpha)
+        X_mean = np.mean(X, axis=0)
+        X_std = np.std(X, axis=0) + 1e-8
+        X_scaled = (X - X_mean) / X_std
+
+        beta_hat = ridge_fit(X_scaled, y, lam=alpha)
 
         return {
             "beta_hat": beta_hat,
+            "X_mean": X_mean,
+            "X_std": X_std,
             "type": "ridge",
         }
-
-    def train_lasso_regression(
-        self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
-    ) -> Any:
-        """
-        Train a Lasso Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Regularization strength (default is 1.0).
-
-        Returns
-        -------
-        Any
-            The trained Lasso Regression model instance.
-        """
-        model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_train, y_train)
-        return model
-
-    def train_elasticnet_regression(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        alpha: float = 1.0,
-        l1_ratio: float = 0.5,
-    ) -> Any:
-        """
-        Train an ElasticNet Regression model.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Constant that multiplies the penalty terms (default is 1.0).
-        l1_ratio : float, optional
-            The ElasticNet mixing parameter (default is 0.5).
-
-        Returns
-        -------
-        Any
-            The trained ElasticNet Regression model instance.
-        """
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
-        )
-        model.fit(X_train, y_train)
-        return model
 
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
     ) -> Dict[str, float]:
-        """
-        Evaluate a trained model on testing data.
-
-        Parameters
-        ----------
-        model : Any
-            The trained regression model.
-        X_test : pd.DataFrame
-            The testing feature data.
-        y_test : pd.Series
-            The testing target data.
-
-        Returns
-        -------
-        dict of str to float
-            A dictionary containing evaluation metrics (MAE, RMSE, R2).
-        """
-        # OLSBaseline uses its own evaluate() method
+        """Evaluate a trained model on testing data."""
         if isinstance(model, OLSBaseline):
             return model.evaluate(X_test, y_test)
 
         if isinstance(model, dict) and model.get("type") == "ridge":
             X = np.asarray(X_test, dtype=float)
-            X_aug = np.column_stack([np.ones(len(X)), X])
+
+            X_mean = model["X_mean"]
+            X_std = model["X_std"]
+            X_scaled = (X - X_mean) / X_std
+
+            X_aug = np.column_stack([np.ones(len(X_scaled)), X_scaled])
             y_pred = X_aug @ model["beta_hat"]
         else:
             y_pred = model.predict(X_test)
@@ -195,25 +97,7 @@ class ModelComparison:
         alphas=None,
         k: int = 5,
     ) -> tuple:
-        """
-        Select the optimal alpha via k-fold cross-validation.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alphas : array-like, optional
-            Candidate alpha values. Defaults to log-spaced values.
-        k : int
-            Number of folds (default is 5).
-
-        Returns
-        -------
-        tuple
-            (best_alpha, cv_mse_array) where cv_mse_array has shape (len(alphas),).
-        """
+        """Select the optimal alpha via k-fold cross-validation with fold-level scaling."""
         if alphas is None:
             alphas = np.logspace(-3, 3, 100)
 
@@ -241,8 +125,14 @@ class ModelComparison:
                 X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
                 y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
 
-                beta = ridge_fit(X_tr, y_tr, lam=alpha)
-                X_val_aug = np.column_stack([np.ones(len(X_val)), X_val])
+                X_tr_mean = np.mean(X_tr, axis=0)
+                X_tr_std = np.std(X_tr, axis=0) + 1e-8
+                X_tr_scaled = (X_tr - X_tr_mean) / X_tr_std
+
+                X_val_scaled = (X_val - X_tr_mean) / X_tr_std
+
+                beta = ridge_fit(X_tr_scaled, y_tr, lam=alpha)
+                X_val_aug = np.column_stack([np.ones(len(X_val_scaled)), X_val_scaled])
                 y_pred = X_val_aug @ beta
 
                 fold_mses.append(mean_squared_error(y_val, y_pred))
@@ -261,22 +151,12 @@ class ModelComparison:
     ):
         """Plot cross-validation error curve."""
         plt.figure(figsize=(8, 5))
-
-        plt.plot(
-            alphas,
-            mse_values,
-            marker="o",
-        )
-
+        plt.plot(alphas, mse_values, marker="o")
         plt.xscale("log")
-
         plt.xlabel("Lambda (α)")
         plt.ylabel("Cross-Validation MSE")
-
         plt.title(f"{model_name} CV Error Curve")
-
         plt.grid(True)
-
         plt.show()
 
     def compare_metrics(
@@ -286,46 +166,18 @@ class ModelComparison:
         X_test: pd.DataFrame,
         y_test: pd.Series,
     ) -> pd.DataFrame:
-        """
-        Train and evaluate all supported models and compile their metrics.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        X_test : pd.DataFrame
-            The testing feature data.
-        y_test : pd.Series
-            The testing target data.
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe containing comparison metrics for all trained models.
-        """
+        """Train and evaluate OLS and Ridge models and compile their metrics."""
         alphas = np.logspace(-3, 3, 100)
         results = {}
 
-        # OLS Baseline
         ols = self.train_linear_regression(X_train, y_train)
         results["OLS"] = self.evaluate_model(ols, X_test, y_test)
 
-        # Ridge with CV
         best_ridge_alpha, _ = self.cv_select_alpha(X_train, y_train, alphas)
         ridge = self.train_ridge_regression(X_train, y_train, alpha=best_ridge_alpha)
         results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(
             ridge, X_test, y_test
         )
-
-        # Lasso with CV (using sklearn — no from-scratch lasso exists)
-        lasso = self.train_lasso_regression(X_train, y_train)
-        results["Lasso (α=1.0)"] = self.evaluate_model(lasso, X_test, y_test)
-
-        # ElasticNet (using sklearn — no from-scratch elasticnet exists)
-        elasticnet = self.train_elasticnet_regression(X_train, y_train)
-        results["ElasticNet"] = self.evaluate_model(elasticnet, X_test, y_test)
 
         return pd.DataFrame(results).T
 
@@ -398,7 +250,7 @@ class ModelComparison:
         y_test: pd.Series,
         vif_threshold: float = 10.0,
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Select variables with VIF filtering, then compare OLS and regularized models."""
+        """Select variables with VIF filtering, then compare OLS and Ridge models."""
         X_train_selected, selected_features, vif_table = self.select_features_by_vif(
             X_train,
             threshold=vif_threshold,
@@ -436,19 +288,7 @@ class ModelComparison:
         return metrics_df, selection_info
 
     def generate_summary(self, metrics_df: pd.DataFrame) -> str:
-        """
-        Generate a text summary of the model comparison results.
-
-        Parameters
-        ----------
-        metrics_df : pd.DataFrame
-            The dataframe containing model comparison metrics.
-
-        Returns
-        -------
-        str
-            A formatted summary string of the results.
-        """
+        """Generate a text summary of the model comparison results."""
         best_rmse = metrics_df["RMSE"].idxmin()
         best_r2 = metrics_df["R2_test"].idxmax()
         best_mae = metrics_df["MAE"].idxmin()
@@ -470,18 +310,14 @@ class OLSBaseline:
 
     def __init__(self, random_state=42):
         self.random_state = random_state
-
         self.beta_hat = None
         self.sigma2_hat = None
-
         self.metrics = None
         self.inference_table = None
         self.vif_table = None
-
         self.y_train_pred = None
         self.y_test_pred = None
         self.residuals = None
-
         self.X_train = None
         self.X_train_raw = None
         self.y_train = None
@@ -495,39 +331,24 @@ class OLSBaseline:
         self.y_train = y_train
 
         n = X_train.shape[0]
-
-        # augmented matrix with intercept
         self.X_train = np.column_stack([np.ones(n), X_train])
 
-        # ols_fit internally adds intercept
-        self.beta_hat, self.sigma2_hat = ols_fit(
-            X_train,
-            y_train,
-        )
-
+        self.beta_hat, self.sigma2_hat = ols_fit(X_train, y_train)
         self.y_train_pred = self.X_train @ self.beta_hat
-
         self.residuals = y_train - self.y_train_pred
-
         return self
 
     def predict(self, X):
         """Predict using fitted OLS model."""
         X = np.asarray(X, dtype=float)
-
         n = X.shape[0]
-
         X_aug = np.column_stack([np.ones(n), X])
-
         return X_aug @ self.beta_hat
 
     def evaluate(self, X_test, y_test):
         """Evaluate on held-out test set."""
         X_test = np.asarray(X_test, dtype=float)
-        y_test = np.asarray(
-            y_test,
-            dtype=float,
-        )
+        y_test = np.asarray(y_test, dtype=float)
 
         self.y_test_pred = self.predict(X_test)
 
@@ -536,7 +357,6 @@ class OLSBaseline:
             "RMSE": np.sqrt(mean_squared_error(y_test, self.y_test_pred)),
             "R2_test": r2_score(y_test, self.y_test_pred),
         }
-
         return self.metrics
 
     def run_inference(self, feature_names):
@@ -561,13 +381,11 @@ class OLSBaseline:
                 "ci_upper": result["ci_upper"],
             }
         )
-
         return self.inference_table
 
     def compute_vif(self, X, feature_names):
         """Compute Variance Inflation Factors."""
         vif_values = vif(X)
-
         vif_scores = []
 
         for feature, vif_value in zip(feature_names, vif_values):
@@ -580,7 +398,6 @@ class OLSBaseline:
             )
 
         self.vif_table = pd.DataFrame(vif_scores)
-
         return self.vif_table
 
     def diagnostic_plots(self):
