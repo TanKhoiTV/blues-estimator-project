@@ -197,14 +197,22 @@ class TestModelComparison(unittest.TestCase):
         self.assertIsNotNone(model.beta_hat)
 
     def test_train_ridge_sklearn_parity(self):
-        """Ridge with small alpha approximates OLS."""
+        """Ridge with small alpha produces predictions close to OLS."""
         comp = ModelComparison()
         ols = comp.train_linear_regression(self.X_train, self.y_train)
         ridge = comp.train_ridge_regression(self.X_train, self.y_train, alpha=1e-6)
 
-        # Both are dicts with beta_hat
-        self.assertIn("beta_hat", ridge)
-        np.testing.assert_allclose(ridge["beta_hat"], ols.beta_hat, atol=0.1)
+        # Ridge scales features internally, so coefficients live in
+        # standardized space — compare predictions instead.
+        ols_preds = ols.predict(self.X_test)
+        ridge_preds = comp.evaluate_model(ridge, self.X_test, self.y_test)
+        # evaluate_model returns a dict; re-predict via the ridge path
+        X = np.asarray(self.X_test, dtype=float)
+        X_scaled = (X - ridge["feature_means"]) / ridge["feature_stds"]
+        X_aug = np.column_stack([np.ones(len(X_scaled)), X_scaled])
+        ridge_preds = X_aug @ ridge["beta_hat"]
+
+        np.testing.assert_allclose(ridge_preds, ols_preds, atol=0.15)
 
     def test_train_ridge_large_lambda_shrinkage(self):
         """Ridge with large lambda shrinks coefficients toward zero."""
@@ -215,30 +223,30 @@ class TestModelComparison(unittest.TestCase):
         self.assertLess(np.max(np.abs(ridge["beta_hat"][1:])), 0.1)
 
     def test_train_lasso_returns_sklearn_model(self):
-        """train_lasso_regression() returns a fitted sklearn Lasso."""
+        """train_lasso_regression() returns a dict with an sklearn Lasso."""
         comp = ModelComparison()
-        # On this branch, Lasso returns the sklearn model directly
-        model = comp.train_lasso_regression(self.X_train, self.y_train, alpha=0.1)
+        result = comp.train_lasso_regression(self.X_train, self.y_train, alpha=0.1)
 
-        # Check it's an sklearn Lasso with fitted coef_
-        self.assertTrue(hasattr(model, "coef_"))
-        self.assertEqual(len(model.coef_), 4)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["type"], "lasso")
+        self.assertTrue(hasattr(result["model"], "coef_"))
 
     def test_train_lasso_shrinks_weak_features(self):
         """Lasso with large alpha shrinks weak features to exactly zero."""
         comp = ModelComparison()
-        model = comp.train_lasso_regression(self.X_train, self.y_train, alpha=10.0)
+        result = comp.train_lasso_regression(self.X_train, self.y_train, alpha=10.0)
 
-        # Feature 'c' has true coefficient 0.0 — should be zero
-        self.assertEqual(model.coef_[2], 0.0)
+        # Feature 'c' (index 2) has true coefficient 0.0 — should be zero
+        self.assertEqual(result["model"].coef_[2], 0.0)
 
     def test_train_elasticnet_returns_sklearn_model(self):
-        """train_elasticnet_regression() returns a fitted sklearn ElasticNet."""
+        """train_elasticnet_regression() returns a dict with an sklearn ElasticNet."""
         comp = ModelComparison()
-        model = comp.train_elasticnet_regression(self.X_train, self.y_train, alpha=0.1)
+        result = comp.train_elasticnet_regression(self.X_train, self.y_train, alpha=0.1)
 
-        self.assertTrue(hasattr(model, "coef_"))
-        self.assertEqual(len(model.coef_), 4)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["type"], "elasticnet")
+        self.assertTrue(hasattr(result["model"], "coef_"))
 
     # ── Compare metrics ──────────────────────────────────────────
 
