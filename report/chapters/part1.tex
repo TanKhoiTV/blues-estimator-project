@@ -154,7 +154,7 @@ Trong đó, $\mathbf{I}_n$ là ma trận đơn vị kích thước $n \times n$.
     Nếu một mô hình hồi quy tuyến tính thỏa mãn đầy đủ các giả thiết từ (1) đến (5), thì ước lượng Bình phương Nhỏ nhất $\hat{\boldsymbol{\beta}}_{OLS}$ là ước lượng tuyến tính không chệch tốt nhất — BLUE (Best Linear Unbiased Estimator).
 \end{theorem}
 
-"Tốt nhất" mang ý nghĩa là trong tất cả các lượng tuyến tính và không chệch của $\beta$, ước lượng OLS là ước lượng đạt phương sai nhỏ nhất ($\text{Var}(\hat{\boldsymbol{\beta}}_{OLS}) \le \text{Var}(\tilde{\boldsymbol{\beta}})$ với mọi ước lượng không chệch $\tilde{\boldsymbol{\beta}}$ khác) nằm đảm bảo tính ổn định và tin cậy vượt trội của nghiệm OLS khi áp dụng trên thực nghiệm.
+"Tốt nhất" mang ý nghĩa là trong tất cả các ước lượng tuyến tính và không chệch của $\beta$, ước lượng OLS là ước lượng đạt phương sai nhỏ nhất ($\text{Var}(\hat{\boldsymbol{\beta}}_{OLS}) \le \text{Var}(\tilde{\boldsymbol{\beta}})$ với mọi ước lượng không chệch $\tilde{\boldsymbol{\beta}}$ khác) nằm đảm bảo tính ổn định và tin cậy vượt trội của nghiệm OLS khi áp dụng trên thực nghiệm.
 
 \section{Ma Trận Chiếu (Hat Matrix) và Tính Chất Hình Học của OLS}
 
@@ -419,7 +419,9 @@ Thiết lập cho đạo hàm bằng vector không $\mathbf{0}$ để tìm vị 
 
 $$-2\mathbf{X}^T\mathbf{y} + 2\mathbf{X}^T\mathbf{X}\boldsymbol{\beta} + 2\lambda\boldsymbol{\beta} = \mathbf{0} \implies (\mathbf{X}^T\mathbf{X} + \lambda \mathbf{I})\boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}$$
 
-Ma trận $\mathbf{X}^T\mathbf{X}$ là ma trận nửa xác định dương. Khi cộng thêm $\lambda \mathbf{I}$ với $\lambda > 0$ đảm bảo ma trận $(\mathbf{X}^T\mathbf{X} + \lambda \mathbf{I})$ sẽ xác định dương và luôn khả nghịch, bất kể ma trận gốc $\mathbf{X}$ có đa cộng tuyến hay không. Ta thu được nghiệm đóng của hồi quy Ridge:
+Ma trận $\mathbf{X}^T\mathbf{X}$ là ma trận nửa xác định dương. Khi cộng thêm $\lambda \mathbf{I}$ với $\lambda > 0$ đảm bảo ma trận $(\mathbf{X}^T\mathbf{X} + \lambda \mathbf{I})$ sẽ xác định dương và luôn khả nghịch, bất kể ma trận gốc $\mathbf{X}$ có đa cộng tuyến hay không.
+
+Tuy nhiên, do hệ số chặn $\beta_0$ không gây nên hiện tượng đa cộng tuyến nên thành phần trên thường bị loại bằng cách triệt tiêu phần tử đầu tiên trên đường chéo chính của ma trận đơn vị. Khi đó, ta thu được nghiệm đóng của hồi quy Ridge:
 
 $$\hat{\boldsymbol{\beta}}_{Ridge} = (\mathbf{X}^T\mathbf{X} + \lambda \mathbf{I})^{-1}\mathbf{X}^T\mathbf{y}$$
 
