@@ -222,32 +222,6 @@ class TestModelComparison(unittest.TestCase):
         # All non-intercept coefficients should be near zero
         self.assertLess(np.max(np.abs(ridge["beta_hat"][1:])), 0.1)
 
-    def test_train_lasso_returns_sklearn_model(self):
-        """train_lasso_regression() returns a dict with an sklearn Lasso."""
-        comp = ModelComparison()
-        result = comp.train_lasso_regression(self.X_train, self.y_train, alpha=0.1)
-
-        self.assertIsInstance(result, dict)
-        self.assertEqual(result["type"], "lasso")
-        self.assertTrue(hasattr(result["model"], "coef_"))
-
-    def test_train_lasso_shrinks_weak_features(self):
-        """Lasso with large alpha shrinks weak features to exactly zero."""
-        comp = ModelComparison()
-        result = comp.train_lasso_regression(self.X_train, self.y_train, alpha=10.0)
-
-        # Feature 'c' (index 2) has true coefficient 0.0 — should be zero
-        self.assertEqual(result["model"].coef_[2], 0.0)
-
-    def test_train_elasticnet_returns_sklearn_model(self):
-        """train_elasticnet_regression() returns a dict with an sklearn ElasticNet."""
-        comp = ModelComparison()
-        result = comp.train_elasticnet_regression(self.X_train, self.y_train, alpha=0.1)
-
-        self.assertIsInstance(result, dict)
-        self.assertEqual(result["type"], "elasticnet")
-        self.assertTrue(hasattr(result["model"], "coef_"))
-
     # ── Compare metrics ──────────────────────────────────────────
 
     def test_compare_metrics_returns_dataframe(self):
@@ -261,15 +235,13 @@ class TestModelComparison(unittest.TestCase):
         self.assertIn("R2_test", df.columns)
 
     def test_compare_metrics_includes_all_models(self):
-        """compare_metrics() contains OLS, Ridge, Lasso, ElasticNet."""
+        """compare_metrics() contains OLS and Ridge."""
         comp = ModelComparison()
         df = comp.compare_metrics(self.X_train, self.y_train, self.X_test, self.y_test)
 
         model_names = df.index.tolist()
         self.assertTrue(any("OLS" in n for n in model_names))
         self.assertTrue(any("Ridge" in n for n in model_names))
-        self.assertTrue(any("Lasso" in n for n in model_names))
-        self.assertTrue(any("Elastic" in n for n in model_names))
 
     # ── CV ───────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@
 Model Comparison Module.
 
 This module provides the ModelComparison class to train, evaluate,
-and compare multiple regression models.
+and compare OLS and Ridge regression models.
 """
 
 from typing import Dict, Any, List, Tuple
@@ -11,13 +11,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-from sklearn.linear_model import Lasso, ElasticNet
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r2_score,
 )
-from sklearn.preprocessing import StandardScaler
 
 from part1.ols_implementation import (
     ols_fit,
@@ -35,12 +33,7 @@ from part1.ridge_lasso import (
 
 
 class ModelComparison:
-    """
-    Trains and compares multiple regression models.
-
-    Supports Linear Regression, Ridge Regression, Lasso Regression,
-    and ElasticNet Regression.
-    """
+    """Trains and compares OLS and Ridge regression models."""
 
     def __init__(self) -> None:
         """Initialize the ModelComparison object."""
@@ -109,90 +102,6 @@ class ModelComparison:
             "feature_names": feature_names,
         }
 
-    def train_lasso_regression(
-        self, X_train: pd.DataFrame, y_train: pd.Series, alpha: float = 1.0
-    ) -> Any:
-        """
-        Train a Lasso Regression model with internal Z-score scaling.
-
-        Scales features internally via ``StandardScaler`` and stores the
-        scaler alongside the fitted model so ``evaluate_model`` can apply
-        the same transformation on test data.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Regularization strength (default is 1.0).
-
-        Returns
-        -------
-        Any
-            A dict with ``"model"``, ``"type"``, and ``"scaler"`` for use
-            by ``evaluate_model``.
-        """
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(np.asarray(X_train, dtype=float))
-
-        model = Lasso(alpha=alpha, random_state=42, max_iter=10000)
-        model.fit(X_scaled, y_train)
-
-        return {
-            "model": model,
-            "type": "lasso",
-            "scaler": scaler,
-            "feature_names": list(X_train.columns),
-        }
-
-    def train_elasticnet_regression(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        alpha: float = 1.0,
-        l1_ratio: float = 0.5,
-    ) -> Any:
-        """
-        Train an ElasticNet Regression model with internal Z-score scaling.
-
-        Scales features internally via ``StandardScaler`` and stores the
-        scaler alongside the fitted model so ``evaluate_model`` can apply
-        the same transformation on test data.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            The training feature data.
-        y_train : pd.Series
-            The training target data.
-        alpha : float, optional
-            Constant that multiplies the penalty terms (default is 1.0).
-        l1_ratio : float, optional
-            The ElasticNet mixing parameter (default is 0.5).
-
-        Returns
-        -------
-        Any
-            A dict with ``"model"``, ``"type"``, and ``"scaler"`` for use
-            by ``evaluate_model``.
-        """
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(np.asarray(X_train, dtype=float))
-
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio, random_state=42, max_iter=10000
-        )
-        model.fit(X_scaled, y_train)
-
-        return {
-            "model": model,
-            "type": "elasticnet",
-            "scaler": scaler,
-            "feature_names": list(X_train.columns),
-        }
-
     def evaluate_model(
         self, model: Any, X_test: pd.DataFrame, y_test: pd.Series
     ) -> Dict[str, float]:
@@ -234,10 +143,6 @@ class ModelComparison:
                 X_scaled = (X - model["feature_means"]) / model["feature_stds"]
                 X_aug = np.column_stack([np.ones(len(X_scaled)), X_scaled])
                 y_pred = X_aug @ model["beta_hat"]
-            elif "scaler" in model:
-                # Lasso / ElasticNet via sklearn: use stored StandardScaler
-                X_scaled = model["scaler"].transform(X)
-                y_pred = model["model"].predict(X_scaled)
             else:
                 y_pred = model.predict(X_test)
         else:
@@ -393,14 +298,6 @@ class ModelComparison:
         results[f"Ridge (λ={best_ridge_alpha:.4f})"] = self.evaluate_model(
             ridge, X_test, y_test
         )
-
-        # Lasso with CV (using sklearn — no from-scratch lasso exists)
-        lasso = self.train_lasso_regression(X_train, y_train)
-        results["Lasso (α=1.0)"] = self.evaluate_model(lasso, X_test, y_test)
-
-        # ElasticNet (using sklearn — no from-scratch elasticnet exists)
-        elasticnet = self.train_elasticnet_regression(X_train, y_train)
-        results["ElasticNet"] = self.evaluate_model(elasticnet, X_test, y_test)
 
         return pd.DataFrame(results).T
 
