@@ -25,6 +25,7 @@ class TestDataPipeline(unittest.TestCase):
                 "Age": [65, 70, 75, 80],
                 "EDUC": [12, 16, 12, 14],  # Phân nhóm theo học vấn
                 "SES": [3.0, 1.0, 3.0, None],  # Yếu vị (Mode) toàn cục của SES là 3.0
+                "Site": pd.Categorical(["A", "B", "A", "B"]),  # Biến phân loại object
                 "MMSE": [27, 30, 26, 29],
             }
         )
@@ -39,10 +40,14 @@ class TestDataPipeline(unittest.TestCase):
                     18,
                 ],  # Nhóm EDUC = 12 đã học ở Train, nhóm 18 là mới hoàn toàn
                 "SES": [None, 2.0],  # Dòng đầu tiên bị khuyết SES để test điền khuyết
+                "Site": pd.Categorical(["A", "C"]),  # "A" thấy ở Train, "C" là unseen
                 "MMSE": [28, 29],
             }
         )
 
+    # ──────────────────────────────────────────────────────────
+    # Test 1 — Fit attributes
+    # ──────────────────────────────────────────────────────────
     def test_fit_stores_training_attributes(self):
         """Test 1: Kiểm tra fit() lưu đúng các tham số thống kê từ tập Train."""
         df = self.df_train.drop(columns=["MMSE"])
@@ -77,6 +82,19 @@ class TestDataPipeline(unittest.TestCase):
             places=6,
         )
 
+        # Must store categorical column info
+        self.assertIn("Site", self.pipeline.categorical_columns_)
+        self.assertListEqual(
+            sorted(self.pipeline.categorical_values_["Site"]), ["A", "B"]
+        )
+
+        # Must store encoded column names after transform
+        X_train_transformed = self.pipeline.transform(df)
+        self.assertIn("Site_A", X_train_transformed.columns)
+
+    # ──────────────────────────────────────────────────────────
+    # Test 2 — Column structural integrity
+    # ──────────────────────────────────────────────────────────
     def test_structural_integrity_categorical(self):
         """Test 2: Kiểm tra tính toàn vẹn cấu trúc cột sau khi xử lý dữ liệu qua Pipeline.
 
@@ -93,8 +111,29 @@ class TestDataPipeline(unittest.TestCase):
             list(X_train_transformed.columns), list(X_test_transformed.columns)
         )
 
+    # ──────────────────────────────────────────────────────────
+    # Test 3 — One-hot encoding of categorical variables
+    # ──────────────────────────────────────────────────────────
+    def test_encode_categorical_produces_dummies(self):
+        """Test 3: Kiểm tra encode_categorical() tạo đúng biến giả từ tập Train."""
+        self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
+        X_train_transformed = self.pipeline.transform(
+            self.df_train.drop(columns=["MMSE"])
+        )
+
+        # Site (category) should be one-hot encoded to Site_A, Site_B
+        self.assertIn("Site_A", X_train_transformed.columns)
+        self.assertIn("Site_B", X_train_transformed.columns)
+
+        # Row 0 has Site=A -> Site_A=1, Site_B=0
+        self.assertEqual(X_train_transformed["Site_A"].iloc[0], 1)
+        self.assertEqual(X_train_transformed["Site_B"].iloc[0], 0)
+
+    # ──────────────────────────────────────────────────────────
+    # Test 4 — Missing categorical values use training mode
+    # ──────────────────────────────────────────────────────────
     def test_missing_categorical_uses_training_mode(self):
-        """Test 3: Kiểm tra tính năng điền khuyết bằng Trung vị nhóm (EDUC) và cơ chế phòng vệ toàn cục."""
+        """Test 4: Kiểm tra tính năng điền khuyết bằng Trung vị nhóm (EDUC) và cơ chế phòng vệ toàn cục."""
         # Bước 1: Cho Pipeline học tri thức từ ma trận Train (Học được ses_by_educ của nhóm 12 là 3.0)
         X_train_only = self.df_train.drop(columns=["MMSE"])
         self.pipeline.fit(X_train_only)
