@@ -108,7 +108,7 @@ Tiến hành lấy đạo hàm ma trận (Matrix Calculus) của hàm số theo 
     -2\mathbf{X}^T\mathbf{y} + 2\mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{0} \implies \mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}
 \end{equation}
 
-Phương trình trên được gọi là hệ Phương trình chuẩn tắc (Normal Equations) trong lý thuyết bình phương tối thiểu.
+Phương trình trên được gọi là hệ Phương trình chuẩn tắc (Normal Equations) trong lý thuyết bình phương tối tiểu.
 
 Để phương trình trên có nghiệm thì ma trận $X^T X$ phải khả nghịch. Khi đó, ta thu được công thức nghiệm duy nhất cho ước lượng OLS:
 
@@ -120,7 +120,7 @@ Phương trình trên được gọi là hệ Phương trình chuẩn tắc (Nor
 
 \subsection{Các Giả Thiết Gauss-Markov}
 
-Để phương pháp ước lượng bình phương tối tiêu (OLS) đạt được những tính chất thông kê tối ưu và các suy diễn kiểm định có hiệu lực thì mô hình phải bắt buộc thỏa mãn cả 5 giả thuyết Gauss-Markov sau đây:
+Để phương pháp ước lượng bình phương tối tiểu (OLS) đạt được những tính chất thống kê tối ưu và các suy diễn kiểm định có hiệu lực thì mô hình phải bắt buộc thỏa mãn cả 5 giả thuyết Gauss-Markov sau đây:
 
 \begin{enumerate}[topsep=0pt, itemsep=2.5pt, leftmargin=1.5cm]
     \item Tuyến tính trong tham số (Linear in Parameters): Mối quan hệ giữa $\mathbf{y}$ và $\mathbf{X}$ được biểu diễn đúng dưới dạng tuyến tính $\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$.
@@ -154,7 +154,7 @@ Trong đó, $\mathbf{I}_n$ là ma trận đơn vị kích thước $n \times n$.
     Nếu một mô hình hồi quy tuyến tính thỏa mãn đầy đủ các giả thiết từ (1) đến (5), thì ước lượng Bình phương Nhỏ nhất $\hat{\boldsymbol{\beta}}_{OLS}$ là ước lượng tuyến tính không chệch tốt nhất — BLUE (Best Linear Unbiased Estimator).
 \end{theorem}
 
-"Tốt nhất" mang ý nghĩa là trong tất cả các ước lược tuyến tính và không chệch của $\beta$, ước lượng OLS là ước lượng đạt phương sai nhỏ nhất ($\text{Var}(\hat{\boldsymbol{\beta}}_{OLS}) \le \text{Var}(\tilde{\boldsymbol{\beta}})$ với mọi ước lượng không chệch $\tilde{\boldsymbol{\beta}}$ khác) nằm đảm bảo tính ổn định và tin cậy vượt trội của nghiệm OLS khi áp dụng trên thực nghiệm.
+"Tốt nhất" mang ý nghĩa là trong tất cả các lượng tuyến tính và không chệch của $\beta$, ước lượng OLS là ước lượng đạt phương sai nhỏ nhất ($\text{Var}(\hat{\boldsymbol{\beta}}_{OLS}) \le \text{Var}(\tilde{\boldsymbol{\beta}})$ với mọi ước lượng không chệch $\tilde{\boldsymbol{\beta}}$ khác) nằm đảm bảo tính ổn định và tin cậy vượt trội của nghiệm OLS khi áp dụng trên thực nghiệm.
 
 \section{Ma Trận Chiếu (Hat Matrix) và Tính Chất Hình Học của OLS}
 
@@ -253,7 +253,7 @@ Ma trận $\mathbf{H}$ chính là toán tử chiếu vuông góc. Khi ta thực 
 Mối liên hệ giữa tính chất của ma trận chiếu với ý nghĩa hình học:
 
 \begin{itemize}[topsep=0pt, itemsep=2.5pt, leftmargin=1.5cm]
-    \item Tính đỗi xứng: Đảm bảo cho phép chiếu vuông góc không trở thành phép chiếu xiên, làm khoảng cách từ $\mathbf{y}$ đến không gian con là ngắn nhất.
+    \item Tính đối xứng: Đảm bảo cho phép chiếu vuông góc không trở thành phép chiếu xiên, làm khoảng cách từ $\mathbf{y}$ đến không gian con là ngắn nhất.
     \item Tính lũy đẳng: Khi vector $\mathbf{y}$ đã được chiếu vuông góc xuống không gian con $\text{Col}(\mathbf{X})$ để trở thành $\hat{\mathbf{y}}$, điểm $\hat{\mathbf{y}}$ này đã nằm sẵn trên mặt phẳng. Nếu ta tiếp tục dùng toán tử $\mathbf{H}$ để chiếu nó lần thứ hai, vị trí của nó sẽ đứng yên không thay đổi ($\mathbf{H}\hat{\mathbf{y}} = \hat{\mathbf{y}}$).
     \item Tính chất vết ($\text{trace}(\mathbf{H}) = p + 1$): Vết của một ma trận chiếu vuông góc trong đại số tuyến tính luôn luôn bằng số chiều (dimension) của không gian con mà nó chiếu xuống. Trong bài toán hồi quy bội, số chiều này chính là số lượng tham số độc lập cần ước lượng ($p+1$).
 \end{itemize}
