@@ -43,14 +43,28 @@ class TestDataPipeline(unittest.TestCase):
             }
         )
 
-    def test_no_data_leakage_in_scaling(self):
-        """Test 1: Kiểm tra Z-score scaling trên tập test có dùng parameters của tập train hay không."""
+    def test_transform_preserves_raw_data(self):
+        """Test 1: Kiểm tra Pipeline giữ nguyên dữ liệu thô (không scale chung) để bảo vệ OLS."""
         self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
         X_test_transformed = self.pipeline.transform(
             self.df_test.drop(columns=["MMSE"])
         )
+        # Giá trị nWBV phải được giữ nguyên bản là 0.78 thay vì Z-score
+        self.assertEqual(X_test_transformed["nWBV"].iloc[0], 0.78)
+
+    def test_explicit_scaling_no_leakage(self):
+        """Test 2: Kiểm tra hàm scale_features (nếu được gọi thủ công) vẫn chống Leakage chính xác."""
+        self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
+
+        # Lấy dữ liệu thô từ transform
+        X_test_raw = self.pipeline.transform(self.df_test.drop(columns=["MMSE"]))
+
+        # Ép scale thủ công để test hàm scale_features
+        X_test_scaled = self.pipeline.scale_features(X_test_raw)
+
+        # Lúc này giá trị mới biến thành Z-score và không bị rò rỉ dữ liệu
         self.assertAlmostEqual(
-            X_test_transformed["nWBV"].iloc[0], 0.5773502691896248, places=6
+            X_test_scaled["nWBV"].iloc[0], 0.5773502691896248, places=6
         )
 
     def test_structural_integrity_categorical(self):
