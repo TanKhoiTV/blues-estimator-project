@@ -228,6 +228,11 @@ class DataPipeline:
         """
         Apply preprocessing using stored training parameters.
 
+        Scaling is not applied here — each model handles its own
+        preprocessing internally so that models that don't require
+        scaling (e.g. OLS, Random Forest) receive raw, interpretable
+        feature values.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -243,8 +248,6 @@ class DataPipeline:
         X = self.handle_missing_values(X)
 
         X = self.encode_categorical(X)
-
-        X = self.scale_features(X)
 
         return X
 
