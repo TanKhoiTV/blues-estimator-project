@@ -148,9 +148,7 @@ class DataPipeline:
             for idx, row in df[df["SES"].isna()].iterrows():
                 educ_val = row["EDUC"]
                 # Lấy trung vị theo nhóm EDUC đã học từ tập Train
-                group_median = self.categorical_values_.get("ses_by_educ", {}).get(
-                    educ_val
-                )
+                group_median = self.ses_educ_medians_.get(educ_val)
 
                 # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
                 if pd.isna(group_median):
@@ -246,7 +244,7 @@ class DataPipeline:
 
         X = self.encode_categorical(X)
 
-        # X = self.scale_features(X)
+        X = self.scale_features(X)
 
         return X
 

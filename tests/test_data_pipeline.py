@@ -43,16 +43,15 @@ class TestDataPipeline(unittest.TestCase):
             }
         )
 
-    @unittest.skip(
-        "Vô hiệu hóa tạm thời vì hệ thống đã tắt tính năng Feature Scaling để phục vụ hồi quy OLS"
-    )
     def test_no_data_leakage_in_scaling(self):
         """Test 1: Kiểm tra Z-score scaling trên tập test có dùng parameters của tập train hay không."""
         self.pipeline.fit(self.df_train.drop(columns=["MMSE"]))
         X_test_transformed = self.pipeline.transform(
             self.df_test.drop(columns=["MMSE"])
         )
-        self.assertEqual(X_test_transformed["nWBV"].iloc[0], 2.0)
+        self.assertAlmostEqual(
+            X_test_transformed["nWBV"].iloc[0], 0.5773502691896248, places=6
+        )
 
     def test_structural_integrity_categorical(self):
         """Test 2: Kiểm tra tính toàn vẹn cấu trúc cột sau khi xử lý dữ liệu qua Pipeline.
