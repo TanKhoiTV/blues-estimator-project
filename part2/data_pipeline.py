@@ -98,9 +98,11 @@ class DataPipeline:
 
         # Học tri thức điền khuyết cho biến SES
         if "SES" in X.columns and "EDUC" in X.columns:
-            # 1. Lưu Yếu vị tổng thể (Global Mode) để dự phòng
-            mode_ses = X["SES"].mode(dropna=True)
-            self.ses_global_mode_ = mode_ses[0] if not mode_ses.empty else 2.0
+            # 1. Lưu Trung vị toàn cục (Global Median) từ tập train để dự phòng
+            global_median = X["SES"].median(skipna=True)
+            self.ses_global_median_ = (
+                global_median if not pd.isna(global_median) else 3.0
+            )
 
             # 2. Học từ điển Trung vị SES theo từng năm học vấn (EDUC)
             self.ses_educ_medians_ = X.groupby("EDUC")["SES"].median().to_dict()
@@ -136,12 +138,8 @@ class DataPipeline:
         """
         df = df.copy()
 
-        # Tính trung vị toàn cục của SES phòng trường hợp khẩn cấp
-        global_ses_median = df["SES"].median() if "SES" in df.columns else 3.0
-        if pd.isna(global_ses_median):
-            global_ses_median = (
-                3.0  # Giá trị mặc định an toàn nếu toàn bộ cột SES trống
-            )
+        # Dùng trung vị toàn cục đã học từ tập train, không tính lại từ df hiện tại
+        global_ses_median = getattr(self, "ses_global_median_", 3.0)
 
         if "SES" in df.columns and "EDUC" in df.columns:
             # Điền khuyết theo nhóm EDUC
