@@ -9,6 +9,7 @@ from typing import Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 
 
 class DataPipeline:
@@ -328,11 +329,25 @@ class DataPipeline:
                 f"Không thể tiếp tục tiền xử lý luồng OLS."
             )
 
+        # Thêm cột Subject ID trước khi split
+        groups = df["Subject ID"]
+
         # Giữ lại đúng các cột quy chuẩn
         df = df[required_columns]
 
+        gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        train_idx, test_idx = next(
+            gss.split(
+                df.drop(columns=[target_column]), df[target_column], groups=groups
+            )
+        )
+
+        X = df.drop(columns=[target_column])
+        y = df[target_column]
+
         # (Chia Train/Test để chống Leakage)
-        X_train, X_test, y_train, y_test = self.split_data(df, target_column)
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
         # Learn parameters ONLY from training data
         self.fit(X_train)
