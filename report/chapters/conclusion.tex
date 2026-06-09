@@ -4,7 +4,191 @@
 
 \section{Tóm tắt kết quả đạt được}
 
+Phần 2 của đồ án đã triển khai thành công một pipeline phân tích dữ liệu hoàn chỉnh—từ
+khảo sát dữ liệu (EDA), tiền xử lý, xây dựng mô hình đến đánh giá kết quả—trên bộ
+dữ liệu ảnh cộng hưởng từ não bộ theo dõi dọc \textbf{OASIS-2} (373 lượt khám của
+150 bệnh nhân, nhóm tuổi 60 - 96).
+ 
+\subsection{ Pipeline Tiền Xử Lý}
+ 
+\begin{itemize}
+  \item \textbf{Xử lý missing values có căn cứ thống kê:}
+  
+   Biến \texttt{SES}
+        (tỉ lệ khuyết \(\approx 5{,}09\%\)) được impute bằng
+        \emph{Group-by-Median} theo nhóm học vấn \texttt{EDUC}, tận dụng tương
+        quan thứ bậc giữa hai biến thay vì dùng median toàn cục. Hai quan sát
+        khuyết ở biến mục tiêu \texttt{MMSE} bị loại bỏ (listwise deletion) để
+        tránh sai lệch ước lượng.
+ 
+  \item \textbf{Phát hiện và xử lý đa cộng tuyến:} 
+  
+  Phân tích Centered VIF xác
+        nhận bốn đặc trưng y sinh (\texttt{nWBV}, \texttt{Age}, \texttt{EDUC},
+        \texttt{SES}) hoàn toàn độc lập tuyến tính (\(\text{VIF} < 3\)) sau khi
+        tích hợp hệ số chặn (intercept). Biến \texttt{EDUC} bị loại bỏ ở mô
+        hình OLS chọn biến do mất ý nghĩa thống kê sau hiệu chỉnh sai số chuẩn
+        mạnh HC3 (\(p > 0{,}05\)).
+ 
+  \item \textbf{Nguyên tắc fit-on-train, transform-both:}
+  
+   Toàn bộ tham số tiền
+        xử lý (giá trị median theo nhóm, tham số chuẩn hóa Z-score) được ước
+        lượng \emph{hoàn toàn} từ tập huấn luyện và áp dụng thụ động lên tập
+        kiểm thử, đảm bảo không rò rỉ thông tin (data leakage).
+\end{itemize}
+ 
+\subsection{So Sánh Bốn Mô Hình trên Tập Kiểm Thử}
+ 
+Bốn kiến trúc mô hình được xây dựng, huấn luyện và đánh giá độc lập trên tập
+kiểm thử (\(n_{\text{test}} = 75\) bệnh nhân chưa từng thấy):
+ 
+\begin{table}[h]
+  \centering
+  \caption{Kết quả đánh giá trên tập kiểm thử (Test Set)}
+  \label{tab:model_comparison}
+  \begin{tabular}{lrrr}
+    \toprule
+    \textbf{Mô hình} & \textbf{MAE} & \textbf{RMSE} & \boldmath$R^2_{\text{Test}}$ \\
+    \midrule
+    OLS Baseline                                     & 2{,}4563 & 2{,}9701 & $-0{,}1338$ \\
+    OLS Chọn biến (Centered VIF)                     & 2{,}4590 & 2{,}9698 & $-0{,}1337$ \\
+    \textbf{Ridge} $(\lambda^* = 6{,}5793)$          & \textbf{2{,}2899} & \textbf{2{,}9432} & $\mathbf{-0{,}1106}$ \\
+    Kernel Ridge $(\alpha^*,\,\gamma^*$ via CV$)$    & 2{,}19-2{,}69 & 2{,}88-3{,}51 & $-0{,}10$ đến $-0{,}42$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+ 
+\textbf{Ridge Regression} $(\lambda^* = 6{,}5793$, chọn qua K-Fold CV với
+\(k=5\)) là mô hình có hiệu năng tổng quát hóa tốt nhất trên cả ba chỉ số.
+Cơ chế phạt $L_2$ phát huy hiệu quả kép: thu nhỏ đồng đều hệ số của các biến
+có tương quan nội tại (\texttt{Age}--\texttt{nWBV}, \texttt{EDUC}--\texttt{SES})
+đồng thời giữ nguyên toàn bộ không gian đặc trưng—khác biệt về triết lý so với
+\emph{feature selection} của OLS chọn biến.
+ 
+\textbf{Kernel Ridge Regression} vượt trội về diagnostic plots trên tập huấn
+luyện (phần dư phân tán đều, Scale-Location phẳng hơn), song thua Ridge trên
+tập kiểm thử kể cả sau khi $(\alpha^*, \gamma^*)$ được tối ưu qua CV Grid
+Search $(6 \times 5 = 30$ tổ hợp$)$. Kết quả này xác nhận \emph{nghịch lý kích
+thước mẫu}: với $n = 371$ và $p = 4$, ma trận Gram
+$K \in \mathbb{R}^{296 \times 296}$ có bậc tự do vượt xa Ridge (chỉ học
+$4$ hệ số $\hat{\beta}$), dẫn đến overfit cấu trúc Train mà không tổng quát
+hóa được.
+ 
+\subsection{Ý Nghĩa Lâm Sàng của Các Đặc Trưng}
+ 
+\begin{itemize}
+  \item \textbf{Thể tích não chuẩn hóa (\texttt{nWBV}):} 
+  
+  Đặc trưng mang tính
+        sinh học trực tiếp nhất. Sự sụt giảm \texttt{nWBV} phản ánh quá trình
+        teo tế bào thần kinh do tích tụ mảng bám amyloid và nút thắt sợi
+        tau—dấu ấn bệnh lý đặc trưng của Alzheimer. Mô hình ghi nhận tương quan
+        thuận mạnh giữa tỷ lệ thể tích chất xám/chất trắng còn lại và khả năng
+        duy trì điểm số nhận thức MMSE.
+ 
+  \item \textbf{Tuổi tác (\texttt{Age}):} 
+  
+    Yếu tố nguy cơ không thể can thiệp
+        hàng đầu. Lão hóa thần kinh tích lũy theo thời gian tạo ra mối quan hệ
+        phi tuyến với MMSE—đặc biệt ở giai đoạn bùng phát triệu chứng lâm sàng
+        muộn.
+ 
+  \item \textbf{Học vấn (\texttt{EDUC}) và Kinh tế--Xã hội (\texttt{SES}):}
+
+        Hai yếu tố cấu thành \emph{Dự trữ nhận thức} (Cognitive Reserve). Bệnh
+        nhân có nền tảng học vấn cao duy trì mạng lưới kết nối thần kinh dự
+        phòng tốt hơn, giúp trì hoãn biểu hiện lâm sàng dù cấu trúc não đã bắt
+        đầu tổn thương.
+\end{itemize}
+
+\newpage
+
 \section{Khó khăn gặp phải}
+
+\begin{itemize}
+  \item \textbf{Kích thước mẫu hạn chế và cấu trúc dọc (Longitudinal):}
+
+        Bộ dữ liệu OASIS-2 chỉ có 150 bệnh nhân độc lập với 373 lượt khám.
+        Việc phân chia ngẫu nhiên các lượt khám có nguy cơ để cùng một bệnh
+        nhân xuất hiện ở cả tập huấn luyện lẫn tập kiểm thử (data leakage
+        theo chiều thời gian). Ngoài ra, kích thước mẫu nhỏ khiến Kernel Ridge
+        không thể tổng quát hóa: ma trận Gram $K \in \mathbb{R}^{296 \times
+        296}$ gần như ghi nhớ toàn bộ tập Train mà không học được quy luật
+        tổng quát.
+ 
+  \item \textbf{Vi phạm giả định tuyến tính và phương sai thay đổi:}
+
+        Tất cả bốn mô hình đều ghi nhận $R^2 < 0$ và diagnostic plots cho thấy
+        rõ ràng hai vi phạm giả định Gauss--Markov: (i)~phần dư có cấu trúc
+        hình phễu/đường cong (tính phi tuyến), và (ii)~đường Scale-Location có
+        độ dốc (phương sai thay đổi). Các vi phạm này phản ánh bản chất phi
+        tuyến của quá trình suy giảm nhận thức sinh học, không phải lỗi kỹ
+        thuật của pipeline.
+ 
+  \item \textbf{Đa cộng tuyến ảo do thiếu intercept:}
+
+        Phân tích VIF ban đầu (Uncentered) báo cáo giá trị lạm phát cao giả tạo
+        do hệ số chặn bị tính vào phương trình. Việc chuyển sang Centered VIF
+        (tích hợp intercept trước khi tính) giải quyết vấn đề và xác nhận bốn
+        đặc trưng thực sự độc lập tuyến tính (\(\text{VIF} < 3\)).
+ 
+  \item \textbf{Tối ưu hóa siêu tham số không phản ánh đúng khả năng tổng
+        quát hóa:}
+
+        K-Fold CV thông thường với \(k = 5\) có thể chia cùng một bệnh nhân vào
+        cả fold Train lẫn fold Validation, làm CV MSE lạc quan hơn thực tế.
+        Ngoài ra, Kernel Ridge đạt CV MSE tốt trên tập Train nhưng vẫn thua
+        Ridge trên tập Test—bộc lộ khoảng cách giữa \emph{validation
+        performance} và \emph{generalization performance} khi kích thước mẫu
+        nhỏ.
+ 
+  \item \textbf{Phân phối không cân bằng theo nhóm bệnh:}
+
+        Nhóm bệnh nhân sa sút trí tuệ nặng (MMSE thấp) chiếm tỉ lệ nhỏ trong
+        tập huấn luyện. Điều này giải thích hiện tượng quan sát được trên Q-Q
+        Plot của tất cả các mô hình: sai số hệ thống tăng mạnh ở đuôi dưới phân
+        phối—chính là các ca lâm sàng quan trọng nhất cần dự báo chính xác.
+\end{itemize}
+
+\newpage
 
 \section{Bài học rút ra}
 
+\begin{itemize}
+  \item \textbf{Diagnostic plots đẹp trên tập Train không đồng nghĩa với mô
+        hình tốt hơn.}
+
+        Kernel Ridge có phần dư gần ngẫu nhiên và Scale-Location phẳng hơn
+        Ridge trên tập huấn luyện, nhưng lại thua Ridge trên tập kiểm thử. Đây
+        là bài học cốt lõi của Machine Learning: đánh giá mô hình phải luôn dựa
+        trên tập dữ liệu \emph{chưa từng thấy}, không phải trên dữ liệu đã
+        dùng để huấn luyện hay tinh chỉnh siêu tham số.
+ 
+  \item \textbf{Độ phức tạp mô hình phải tương xứng với kích thước dữ liệu.}
+
+        Với $n = 371$ và $p = 4$, Ridge (4 tham số $\hat{\beta}$) tổng quát hóa
+        tốt hơn Kernel Ridge (296 dual coefficients). Tăng độ phức tạp mô hình
+        không nhất thiết cải thiện hiệu năng—nguyên tắc \emph{Occam's Razor}
+        áp dụng trực tiếp trong lựa chọn mô hình thực nghiệm.
+ 
+  \item \textbf{Regularization và feature selection là hai triết lý khác nhau.}
+
+        OLS chọn biến loại bỏ \texttt{EDUC} để đạt tính diễn giải tối giản
+        (Parsimonious Model). Ridge giữ lại \texttt{EDUC} nhưng thu nhỏ hệ số
+        thông qua phạt $L_2$—đây là sự đánh đổi có chủ đích giữa
+        \emph{interpretability} và \emph{variance control}. Không có lựa chọn
+        tuyệt đối đúng; quyết định phụ thuộc vào mục tiêu ứng dụng.
+  
+  \item \textbf{Kết quả $R^2 < 0$ là thông tin có giá trị khoa học,
+        không phải thất bại.}
+
+        Tất cả bốn mô hình đều ghi nhận $R^2_{\text{Test}} < 0$, khẳng định
+        rằng tổ hợp tuyến tính của bốn đặc trưng hiện tại chưa đủ để phân tách
+        tín hiệu suy giảm nhận thức mang tính cá thể hóa cao trên bộ dữ liệu
+        này. Kết quả này định hướng rõ ràng cho nghiên cứu tiếp theo: cần thêm
+        đặc trưng sinh học (\texttt{eTIV}, \texttt{CDR}), mô hình hóa
+        interaction terms (\texttt{Age} $\times$ \texttt{nWBV}), hoặc tích hợp
+        cấu trúc chuỗi thời gian của bộ dữ liệu longitudinal.
+\end{itemize}
+ 

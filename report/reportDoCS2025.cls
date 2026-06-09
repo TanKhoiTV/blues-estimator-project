@@ -53,6 +53,7 @@
 \RequirePackage[table]{xcolor}
 \RequirePackage{geometry}
 \RequirePackage{microtype}
+\UseMicrotypeSet[protrusion]{alltext-nott}
 \RequirePackage[fontsize=12pt]{scrextend}
 
 % Bibliography and citations
@@ -120,6 +121,10 @@
 \definecolor{success_green}{RGB}{40,167,69}
 \definecolor{warning_orange}{RGB}{255,193,7}
 \definecolor{danger_red}{RGB}{220,53,69}
+
+\definecolor{MMSE_plot}{HTML}{d35400}
+\definecolor{nWBV_plot}{HTML}{8e44ad}
+\definecolor{eTIV_plot}{HTML}{2980b9}
 
 %--------------------------------------
 % Page layout and formatting
