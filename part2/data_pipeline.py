@@ -148,9 +148,7 @@ class DataPipeline:
             for idx, row in df[df["SES"].isna()].iterrows():
                 educ_val = row["EDUC"]
                 # Lấy trung vị theo nhóm EDUC đã học từ tập Train
-                group_median = self.categorical_values_.get("ses_by_educ", {}).get(
-                    educ_val
-                )
+                group_median = self.ses_educ_medians_.get(educ_val)
 
                 # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
                 if pd.isna(group_median):
@@ -230,6 +228,11 @@ class DataPipeline:
         """
         Apply preprocessing using stored training parameters.
 
+        Scaling is not applied here — each model handles its own
+        preprocessing internally so that models that don't require
+        scaling (e.g. OLS, Random Forest) receive raw, interpretable
+        feature values.
+
         Parameters
         ----------
         X : pd.DataFrame
@@ -245,8 +248,6 @@ class DataPipeline:
         X = self.handle_missing_values(X)
 
         X = self.encode_categorical(X)
-
-        # X = self.scale_features(X)
 
         return X
 
