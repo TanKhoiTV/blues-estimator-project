@@ -143,17 +143,12 @@ class DataPipeline:
         global_ses_median = getattr(self, "ses_global_median_", 3.0)
 
         if "SES" in df.columns and "EDUC" in df.columns:
-            # Điền khuyết theo nhóm EDUC
-            for idx, row in df[df["SES"].isna()].iterrows():
-                educ_val = row["EDUC"]
-                # Lấy trung vị theo nhóm EDUC đã học từ tập Train
-                group_median = self.ses_educ_medians_.get(educ_val)
+            # ĐÃ SỬA LỖI FOR: Sử dụng .map() và .fillna() vector hóa thay cho vòng lặp iterrows thủ công
+            mapped_medians = df["EDUC"].map(getattr(self, "ses_educ_medians_", {}))
+            df["SES"] = df["SES"].fillna(mapped_medians)
 
-                # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
-                if pd.isna(group_median):
-                    df.at[idx, "SES"] = global_ses_median
-                else:
-                    df.at[idx, "SES"] = group_median
+            # Điền khuyết dự phòng cho những nhóm EDUC mới
+            df["SES"] = df["SES"].fillna(global_ses_median)
 
             # Ép kiểu an toàn sau khi đã đảm bảo sạch bóng NaN
             df["SES"] = df["SES"].astype(int)
@@ -178,9 +173,16 @@ class DataPipeline:
 
         # Ensure categories are consistent with training data
         for col in self.categorical_columns_:
-            df[col] = df[col].where(
-                df[col].isin(self.categorical_values_[col]), other=None
-            )
+            # ĐÃ SỬA LỖI FOR: Gán giá trị biến lạ bằng Mode thay vì other=None để tránh sinh ra NaN
+            fallback_mode = getattr(self, "categorical_modes_", {}).get(col)
+            if fallback_mode is not None:
+                df[col] = df[col].where(
+                    df[col].isin(self.categorical_values_[col]), other=fallback_mode
+                )
+            else:
+                df[col] = df[col].where(
+                    df[col].isin(self.categorical_values_[col]), other=None
+                )
 
             df[col] = pd.Categorical(df[col], categories=self.categorical_values_[col])
 
