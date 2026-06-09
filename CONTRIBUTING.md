@@ -1,19 +1,19 @@
-# Contributing to Blues Estimator Project
+# Contributing cho Dự án Blues Estimator
 
-To start contributing, follow the steps.
+Để bắt đầu contributing, hãy làm theo các bước dưới đây.
 
 > [!NOTE]
-> Some commands shown below have a dot `.` parameter indicating the current directory. In most cases run these commands from root and be mindful to not miss it.
+> Một số lệnh dưới đây có tham số dấu chấm `.` chỉ thư mục hiện tại. Trong hầu hết các trường hợp, hãy chạy các lệnh này từ thư mục gốc và chú ý không bỏ sót dấu chấm đó.
 
-## Clone the Repository
+## Clone Repository
 
-Clone the repository using your preferred method.
+Clone repository bằng phương thức tuỳ chọn.
 
-## Install Dependencies
+## Cài đặt Dependencies
 
-### Install `uv`
+### Cài đặt `uv`
 
-This project uses `uv` for extremely fast, reproducible package management. Install it using the following command:
+Dự án này sử dụng `uv` để quản lý package nhanh và có tính tái tạo cao. Cài đặt bằng lệnh sau:
 
 * **macOS/Linux**:
 
@@ -27,40 +27,40 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-* **Alternative (pip)**:
+* **Cách thay thế (pip)**:
 
 ```bash
 pip install uv
 ```
 
-### Setup and Sync Dependencies
+### Setup và Sync Dependencies
 
-Once `uv` is installed, you do not need to create a virtual environment manually using `venv`.
-The `sync` command handles environment creation, Python versioning, and package installation in one step.
+Sau khi đã cài đặt `uv`, bạn không cần tạo virtual environment thủ công bằng `venv`.
+Lệnh `sync` xử lý việc tạo môi trường, quản lý phiên bản Python và cài đặt package trong một bước duy nhất.
 
-From the root of the repository, run:
+Từ thư mục gốc của repository, chạy:
 
 ```bash
 uv sync
 ```
 
-Optionally, you can install the **pre-commit hook** to automatically format and lint your code every time you commit. See [**Making a Commit** section](#making-a-commit) at the end. This requires a separate one-time installation step.
+Tùy chọn, bạn có thể cài đặt **pre-commit hook** để tự động format và lint code mỗi lần commit. Xem phần [**Thực hiện Commit**](#thực-hiện-commit) ở cuối tài liệu. Bước này chỉ cần cài một lần.
 
 ```bash
 uv run pre-commit install
 ```
 
-### Running Code
+### Chạy Code
 
-To ensure you are using the project's isolated environment, prefix your commands with `uv run` or activate the environment:
+Để đảm bảo bạn đang dùng môi trường biệt lập của dự án, hãy thêm tiền tố `uv run` trước các lệnh hoặc activate môi trường thủ công:
 
-* **Run a script**: `uv run python main.py`
-* **Launch Jupyter**: `uv run jupyter notebook`
-* **Manual Activation**: `source .venv/bin/activate` (macOS/Linux) or `.venv\Scripts\activate` (Windows)
+* **Chạy một script**: `uv run python main.py`
+* **Khởi động Jupyter**: `uv run jupyter notebook`
+* **Activate thủ công**: `source .venv/bin/activate` (macOS/Linux) hoặc `.venv\Scripts\activate` (Windows)
 
-## Sync the Repository
+## Sync Repository
 
-If you worked on this repo before, sync your local `main` branch to the remote branch with:
+Nếu bạn đã làm việc với repo này trước đây, hãy sync nhánh `main` local với remote bằng:
 
 ```bash
 git fetch --all
@@ -68,31 +68,31 @@ git checkout main
 git pull origin main --rebase
 ```
 
-If you have a working branch, sync it as well, after syncing the `main` branch:
+Nếu bạn có working branch riêng, hãy sync nó sau khi đã sync nhánh `main`:
 
 ```bash
-git checkout <your-branch-name>
+git checkout <tên-nhánh-của-bạn>
 git rebase main
 ```
 
-## Create Your Working Branch
+## Tạo Working Branch
 
-This project has a rule to protect the `main` branch from direct commits, so you have to create your own branch if you want to contribute.
+Dự án có rule bảo vệ nhánh `main` khỏi commit trực tiếp, vì vậy bạn phải tạo branch riêng để contributing.
 
 > [!IMPORTANT]
-> Remember to **sync** your local `main` branch first! Then from the local `main` branch:
+> Hãy nhớ **sync** nhánh `main` local trước! Sau đó từ nhánh `main` local:
 
 ```bash
-git checkout -b <your-branch-name>
+git checkout -b <tên-nhánh-của-bạn>
 ```
 
-Your branches should only be owned by one person, and that is _you_. Don't let anybody commit onto them. If you find yourself needing some help with your branches, consider splitting the work across smaller branches.
+Mỗi branch chỉ nên do một người sở hữu, đó là _bạn_. Đừng để ai khác commit lên branch của bạn. Nếu cần hỗ trợ, hãy cân nhắc chia nhỏ công việc thành các branch nhỏ hơn.
 
-## Branch and Commit Naming
+## Quy ước Đặt tên Branch và Commit
 
-### Branches
+### Branch
 
-Branch names follow the pattern `<type>/<short-description>`, where words are separated by hyphens.
+Tên branch tuân theo pattern `<type>/<mô-tả-ngắn>`, trong đó các từ được phân tách bằng dấu gạch ngang.
 
 ```bash
 feat/sql-parser
@@ -101,29 +101,29 @@ chore/pr-templates
 ci/release-workflow
 ```
 
-**Types:**
+**Các type:**
 
-| Type       | Use for                                               |
-| ---------- | ----------------------------------------------------- |
-| `feat`     | New feature or capability                             |
-| `fix`      | Bug fix                                               |
-| `refactor` | Code restructuring with no behavior change            |
-| `docs`     | Documentation only                                    |
-| `test`     | Adding or updating tests                              |
-| `chore`    | Repo/project maintenance (config, templates, tooling) |
-| `ci`       | CI/CD pipeline and automation changes                 |
+| Type       | Dùng cho                                                    |
+| ---------- | ----------------------------------------------------------- |
+| `feat`     | Tính năng hoặc khả năng mới                                 |
+| `fix`      | Sửa lỗi                                                     |
+| `refactor` | Tái cấu trúc code mà không thay đổi hành vi                 |
+| `docs`     | Chỉ thay đổi tài liệu                                       |
+| `test`     | Thêm hoặc cập nhật test                                     |
+| `chore`    | Bảo trì repo/dự án (config, template, tooling)              |
+| `ci`       | Thay đổi CI/CD pipeline và automation                       |
 
 ---
 
-### Commits
+### Commit
 
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+Commit tuân theo [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
-<type>[optional scope]: <short description>
+<type>[scope tùy chọn]: <mô tả ngắn>
 ```
 
-The description is lowercase, imperative mood, and has no trailing period.
+Phần mô tả viết thường, dùng thì mệnh lệnh và không có dấu chấm ở cuối.
 
 ```bash
 feat(sql): add recursive descent parser for SELECT
@@ -133,10 +133,9 @@ chore(github): add issue and PR templates
 ci(build): pin actions/checkout to SHA
 ```
 
-**Scopes** are optional but encouraged for larger codebases. Use the
-module or subsystem name: `core`, `kv`, `table`, `sql`, `ci`, `github`.
+**Scope** là tùy chọn nhưng được khuyến khích dùng cho codebase lớn. Dùng tên module hoặc subsystem: `core`, `kv`, `table`, `sql`, `ci`, `github`.
 
-**Breaking changes** are marked with a `!` before the colon and explained in the commit body:
+**Breaking changes** được đánh dấu bằng `!` trước dấu hai chấm và được giải thích trong phần thân commit:
 
 ```bash
 feat(sql)!: replace token enum with std::variant
@@ -147,41 +146,41 @@ Callers must update match arms to use the new variant types.
 
 ### Scopes
 
-| Scope    | Use for                                                                |
-| :------- | :--------------------------------------------------------------------- |
-| `math`   | Implementation of core OLS, Normal Equations, or Hat Matrix logic      |
-| `stat`   | Statistical inference (t-test, p-values, F-test) and distribution math |
-| `pipe`   | The `DataPipeline` class, imputation logic, and encoding               |
-| `viz`    | Plotting code (Residual plots, EDA heatmaps, feature importance)       |
-| `proof`  | Monte Carlo simulations or Gauss-Markov theorem illustrations          |
-| `report` | Changes to the LaTeX/Markdown files in the `report/` folder            |
+| Scope    | Dùng cho                                                                      |
+| :------- | :---------------------------------------------------------------------------- |
+| `math`   | Implement logic OLS, Normal Equations, hoặc Hat Matrix cốt lõi               |
+| `stat`   | Kiểm định thống kê (t-test, p-values, F-test) và toán phân phối               |
+| `pipe`   | Class `DataPipeline`, logic imputation và encoding                            |
+| `viz`    | Code vẽ đồ thị (Residual plots, EDA heatmaps, feature importance)             |
+| `proof`  | Mô phỏng Monte Carlo hoặc minh họa định lý Gauss-Markov                       |
+| `report` | Thay đổi các file LaTeX/Markdown trong thư mục `report/`                      |
 
-## Making a Commit
+## Thực hiện Commit
 
-### Format and Lint Locally
+### Format và Lint Local
 
-Using `Black` and `Ruff` (already installed with `uv`), run these commands from root to fix styling issues:
+Dùng `Black` và `Ruff` (đã cài cùng `uv`), chạy các lệnh sau từ thư mục gốc để sửa các vấn đề về style:
 
 ```bash
 uv run black .
 uv run ruff check --fix .
 ```
 
-If you get tired of running the commands every time, you can install the pre-commit hook. Run this once, preferably after you just cloned the repo:
+Nếu không muốn chạy thủ công mỗi lần, hãy cài pre-commit hook. Chạy lệnh này một lần, tốt nhất là ngay sau khi clone repo:
 
 ```bash
 uv run pre-commit install
 ```
 
-### Docstring Style
+### Quy tắc Docstring
 
-Docstrings must follow the **NumPy convention** and are enforced by Ruff's `D` ruleset. This is checked automatically alongside other lint rules when you run:
+Docstring phải tuân theo **quy ước NumPy** và được kiểm tra bởi ruleset `D` của Ruff. Kiểm tra này chạy tự động cùng với các lint rule khác khi bạn chạy:
 
 ```bash
 uv run ruff check --fix .
 ```
 
-A minimal compliant docstring should look like this:
+Một docstring hợp lệ tối thiểu trông như sau:
 
 ```python
 def fit(X: np.ndarray, y: np.ndarray) -> None:
@@ -206,168 +205,168 @@ def fit(X: np.ndarray, y: np.ndarray) -> None:
     """
 ```
 
-Key rules to keep in mind:
+Các quy tắc cần lưu ý:
 
-* Summary line is a single sentence in **imperative mood**: "Fit", "Compute", "Return", not "Fits", "Computes", "Returns"
-* Leave a blank line between the summary and the `Parameters` section.
-* Section headers (`Parameters`, `Returns`, `Raises`) are followed by a `----------` underline matching the header length exactly.
-* Each parameter is documented as `name : type` on one line with the description indented on the line below.
+* Dòng tóm tắt là một câu duy nhất ở **thì mệnh lệnh**: "Fit", "Compute", "Return", không phải "Fits", "Computes", "Returns".
+* Để một dòng trống giữa phần tóm tắt và section `Parameters`.
+* Tiêu đề section (`Parameters`, `Returns`, `Raises`) được theo sau bởi gạch chân `----------` có độ dài khớp chính xác với tiêu đề.
+* Mỗi parameter được viết dạng `tên : kiểu` trên một dòng, với mô tả thụt lề ở dòng tiếp theo.
 
-### Check for Documentation Coverage
+### Kiểm tra Docstring Coverage
 
-Use `interrogate` to check if docstring coverage passes the minimum threshold. From root:
+Dùng `interrogate` để kiểm tra docstring coverage có đạt ngưỡng tối thiểu không. Từ thư mục gốc:
 
 ```bash
 uv run interrogate .
 ```
 
-This is run automatically every time you commit with level-1 verbosity (showing the coverage per-file) if you have **pre-commit hook** installed.
+Lệnh này chạy tự động mỗi khi bạn commit ở verbosity cấp 1 (hiển thị coverage theo từng file) nếu bạn đã cài **pre-commit hook**.
 
-To see which functions are missing docstrings, run with higher verbosity:
+Để xem các hàm nào đang thiếu docstring, chạy với verbosity cao hơn:
 
 ```bash
 uv run interrogate -v 2 .
 ```
 
-### Run the Tests
+### Chạy Tests
 
-If your code has any associated tests, run the test scripts.
-If there isn't any test, add the test yourself within the same commit.
+Nếu code của bạn có test liên quan, hãy chạy chúng.
+Nếu chưa có test nào, hãy tự thêm vào trong cùng commit.
 
-Use `pytest.approx()` from `pytest` for floating point comparisons.
+Dùng `pytest.approx()` từ `pytest` để so sánh số dấu phẩy động.
 
-To run the entire suite:
+Để chạy toàn bộ test suite:
 
 ```bash
 uv run pytest
 ```
 
-To run tests for a specific part of the project:
+Để chạy test cho một phần cụ thể của dự án:
 
 ```bash
 uv run pytest tests/test_file.py
 ```
 
-### Commit Your Changes
+### Commit Thay đổi của Bạn
 
-Follow the commit naming guide above.
+Tuân theo hướng dẫn đặt tên commit ở trên.
 
 > [!NOTE]
-> If you have `pre-commit` hook installed, your commit can fail because of pre-commit checks. If it is due to formatting and linting, just re-commit. If it is due to docstring coverage fail, add the docstrings before trying again.
+> Nếu bạn đã cài **pre-commit** hook, commit có thể thất bại do các pre-commit check. Nếu nguyên nhân là format và lint, chỉ cần commit lại. Nếu nguyên nhân là docstring coverage, hãy thêm docstring trước khi thử lại.
 
-## Issues and Pull Requests
+## Issues và Pull Requests
 
-### Working with Issues
+### Làm việc với Issues
 
-There are two pre-configured templates you can choose when opening a new issue.
+Có hai template được cấu hình sẵn để chọn khi mở issue mới.
 
-#### Task Creation
+#### Tạo Task
 
-This defines a new task for the team to work on, letting the project completes its roadmap. Upon opening a _task creation_ issue, there are a few sections to fill in.
+Loại này định nghĩa một task mới cho team thực hiện, giúp dự án hoàn thành lộ trình. Khi mở issue _tạo task_, có một số phần cần điền:
 
-* **Description**: A clear and concise description of what the task is about.
-* **Definition of Done**: A clear and concise description of what is needed for the task to be considered _finished_. Creating sub-issues to help completing the task is recommended.
-* **Proposed Implementation**: An explanation of how the task can be done. Suggest which files are affected.
-* **Additional context**: Add any other context or screenshots about the task.
+* **Description**: Mô tả rõ ràng và súc tích về task.
+* **Definition of Done**: Mô tả rõ ràng và súc tích về những gì cần có để task được coi là _xong_. Nên tạo sub-issue để hỗ trợ hoàn thành task.
+* **Proposed Implementation**: Giải thích cách thực hiện task. Đề xuất các file bị ảnh hưởng.
+* **Additional Context**: Thêm thông tin hoặc ảnh chụp màn hình nếu cần.
 
 #### Bug Report
 
-Use this template when bringing potential problems that need to be solved.
+Dùng template này khi phát hiện các vấn đề cần giải quyết.
 
-* **Describe the bug/problem**: A clear and concise description of what the bug is.
-* **To Reproduce**: The steps needed to reproduce the bug if needed.
-* **Expected behavior**: A clear and concise description of what you expected to happen.
-* **Screenshots**: If applicable, add screenshots to help explain your problem.
-* **Additional context**: Add any other context about the problem here e.g. where the bug might be.
+* **Describe the bug/problem**: Mô tả rõ ràng và súc tích về lỗi.
+* **To Reproduce**: Các bước cần thiết để tái hiện lỗi nếu cần.
+* **Expected behavior**: Mô tả rõ ràng và súc tích về điều bạn mong đợi sẽ xảy ra.
+* **Screenshots**: Nếu có, thêm ảnh chụp màn hình để giải thích vấn đề.
+* **Additional Context**: Thêm thông tin về vấn đề, ví dụ vị trí có thể xảy ra lỗi.
 
 #### Blank Issue
 
-Use this only if your issue is genuinely neither a task nor a bug; for example, a question about project direction or a process concern. If either template fits even partially, prefer it over a blank issue.
+Chỉ dùng loại này nếu issue của bạn thực sự không phải task cũng không phải bug — ví dụ, một câu hỏi về định hướng dự án hoặc vấn đề về quy trình. Nếu bất kỳ template nào phù hợp dù chỉ một phần, hãy ưu tiên dùng nó.
 
 > [!NOTE]
-> **Feature requests** are out of scope for this project. If you have a suggestion, raise it in the team channel instead. It may be considered for a future iteration.
+> **Feature request** nằm ngoài phạm vi dự án này. Nếu có đề xuất, hãy nêu lên trong kênh nhóm. Nó có thể được xem xét cho phiên bản tương lai.
 
-Whichever template you choose, please be as specific as possible with your issues. Use proper tags to categorize the issue.
+Dù chọn template nào, hãy càng cụ thể càng tốt. Sử dụng tag phù hợp để phân loại issue.
 
-### Creating Pull Requests
+### Tạo Pull Requests
 
-The remote `main` branch is protected against direct merges. To merge your working branch, create a **pull request**. Follow these steps for a successful PR!
+Nhánh `main` remote được bảo vệ khỏi việc merge trực tiếp. Để merge working branch của bạn, hãy tạo một **pull request**. Làm theo các bước sau để có PR thành công!
 
-#### Publish Your Working Branch
+#### Publish Working Branch
 
-If you didn't already, publish your working branch to remote.
+Nếu chưa làm, hãy publish working branch của bạn lên remote.
 
 > [!IMPORTANT]
-> If you are not yet a collaborator on the repository, fork it first and publish your branch to your fork instead. Open the PR from your fork's branch against the upstream `main` branch.
+> Nếu bạn chưa là collaborator của repository, hãy fork nó trước và publish branch lên fork đó. Mở PR từ branch trên fork của bạn nhắm vào nhánh `main` của upstream.
 
-Checkout your branch with `git checkout <branch-name>`, then:
+Checkout branch của bạn bằng `git checkout <tên-nhánh>`, sau đó:
 
 ```bash
-git push -u origin <branch-name>
+git push -u origin <tên-nhánh>
 ```
 
-The `-u` flag sets the upstream tracking, so future `git push` and `git pull` commands in that branch work without specifying the remote.
+Flag `-u` thiết lập upstream tracking, để các lệnh `git push` và `git pull` sau này trên branch đó hoạt động mà không cần chỉ định remote.
 
 > [!NOTE]
-> Here's a quick Git reference:
-> **Creating a Local Branch and Publish to Remote**
+> Tài liệu tham khảo Git nhanh:
+> **Tạo Branch Local và Publish lên Remote**
 >
 > ```bash
-> git checkout -b <branch>      # create + switch
-> git push -u origin <branch>   # publish + set tracking
+> git checkout -b <branch>      # tạo + chuyển sang
+> git push -u origin <branch>   # publish + thiết lập tracking
 > ```
 >
-> **Viewing branches**
+> **Xem các branch**
 >
 > ```bash
 > git branch                    # local branches
 > git branch -r                 # remote branches
-> git branch -a                 # both
-> git branch -vv                # local branches + their tracking remotes
+> git branch -a                 # cả hai
+> git branch -vv                # local branches + remote tracking của chúng
 > ```
 >
-> **Set/unset tracking**
+> **Thiết lập/gỡ bỏ tracking**
 >
 > ```bash
-> git branch -u origin/<branch-name>    # set upstream for current branch
-> git branch -u origin/<remote> <local> # set upstream for a specific branch
-> git branch --unset-upstream           # unset for current branch
+> git branch -u origin/<tên-nhánh>      # thiết lập upstream cho branch hiện tại
+> git branch -u origin/<remote> <local> # thiết lập upstream cho branch cụ thể
+> git branch --unset-upstream           # gỡ bỏ cho branch hiện tại
 > ```
 >
 > **Push, Pull, Fetch**
 >
 > ```bash
-> git fetch                     # download remote changes, don't merge
-> git fetch origin <branch>     # fetch a specific branch only
-> git pull                      # fetch + merge (or rebase if configured)
-> git pull --rebase             # fetch + rebase instead of merge
-> git push                      # push current branch to its upstream
-> git push origin <branch>      # push a specific branch explicitly
-> git push --force-with-lease   # force push, but abort if remote has new commits
+> git fetch                     # tải thay đổi remote, không merge
+> git fetch origin <branch>     # chỉ fetch một branch cụ thể
+> git pull                      # fetch + merge (hoặc rebase nếu đã cấu hình)
+> git pull --rebase             # fetch + rebase thay vì merge
+> git push                      # push branch hiện tại lên upstream
+> git push origin <branch>      # push một branch cụ thể
+> git push --force-with-lease   # force push, nhưng hủy nếu remote có commit mới
 > ```
 >
-> **Deleting branches**
+> **Xóa branch**
 >
 > ```bash
-> git branch -d <branch>        # delete local (safe — refuses if unmerged)
-> git branch -D <branch>        # force delete local
-> git push origin -d <branch>   # delete remote
+> git branch -d <branch>        # xóa local (an toàn — từ chối nếu chưa merge)
+> git branch -D <branch>        # force xóa local
+> git push origin -d <branch>   # xóa remote
 > ```
 >
 
-#### Create a Pull Request
+#### Tạo Pull Request
 
-When your code is ready for review, open a PR against the `main` branch using the provided PR Template.
+Khi code sẵn sàng để review, mở PR nhắm vào nhánh `main` bằng PR Template được cung cấp.
 
-* **Update your branch** frequently to prevent merge conflicts, especially right after opening a PR.
-* **Keep your PR focused** on a single feature or fix to make review smoother.
-* **Reference the issue** using `Closes #<issue-number>` in your PR description.
-* **Assign a reviewer** to get your PR reviewed quicker.
-* **Resolve all CI checks** and conversations in order to get your PR accepted.
-  If a check fails, fix it locally using the relevant section of this guide ([Format and Lint Locally](#format-and-lint-locally), [Check for Documentation Coverage](#check-for-documentation-coverage), [Run the Tests](#run-the-tests)), then push again.
-* **Delete your local branch** after a successful merge. GitHub will automatically delete the remote branch. To clean up locally:
+* **Cập nhật branch của bạn** thường xuyên để tránh merge conflict, đặc biệt ngay sau khi mở PR.
+* **Giữ PR tập trung** vào một tính năng hoặc fix duy nhất để review thuận tiện hơn.
+* **Reference issue** bằng `Closes #<số-issue>` trong phần mô tả PR.
+* **Assign reviewer** để PR được review nhanh hơn.
+* **Giải quyết tất cả CI check** và các conversation để PR được accept.
+  Nếu một check thất bại, hãy sửa local theo phần liên quan trong hướng dẫn này ([Format và Lint Local](#format-và-lint-local), [Kiểm tra Docstring Coverage](#kiểm-tra-docstring-coverage), [Chạy Tests](#chạy-tests)), sau đó push lại.
+* **Xóa local branch** sau khi merge thành công. GitHub sẽ tự động xóa remote branch. Để dọn dẹp local:
 
 ```bash
   git checkout main
-  git branch -d <branch-name>
+  git branch -d <tên-nhánh>
 ```
