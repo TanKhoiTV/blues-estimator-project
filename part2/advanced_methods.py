@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import KFold
 
 
 class KernelRidgeScratch:
@@ -139,10 +140,24 @@ class AdvancedMethods:
         self._cached_data = data_key
         return models
 
-    def train_kernel_regression(self, X_train: pd.DataFrame, y_train: pd.Series) -> Any:
-        """Train a Custom Kernel Ridge Regression model from scratch.
+    def cv_select_kernel_params(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        alphas: Optional[list] = None,
+        gammas: Optional[list] = None,
+        k: int = 5,
+    ) -> tuple:
+        """Select optimal alpha and gamma for Kernel Ridge via K-Fold CV.
 
-        Uses an RBF kernel with built-in Z-score feature scaling.
+        Performs an exhaustive grid search over all (alpha, gamma) combinations
+        using K-Fold cross-validation on the training set. For each fold the
+        model is fit on the fold's training split and evaluated on its
+        validation split. The pair minimising mean CV MSE is returned.
+
+        The internal Z-score scaling inside ``KernelRidgeScratch.fit`` ensures
+        no leakage: scaling parameters are re-computed from scratch on each
+        fold's training split, never from the validation split.
 
         Parameters
         ----------
@@ -150,13 +165,91 @@ class AdvancedMethods:
             Training feature matrix.
         y_train : pd.Series of shape (n_samples,)
             Training target vector.
+        alphas : list of float, optional
+            Regularisation strengths to search over.
+            Default is ``[0.01, 0.1, 0.5, 1.0, 5.0, 10.0]``.
+        gammas : list of float, optional
+            RBF bandwidth values to search over.
+            Default is ``[0.001, 0.01, 0.1, 0.5, 1.0]``.
+        k : int, optional
+            Number of cross-validation folds. Default is 5.
+
+        Returns
+        -------
+        best_alpha : float
+            Alpha value that minimises mean CV MSE.
+        best_gamma : float
+            Gamma value that minimises mean CV MSE.
+        cv_results : pd.DataFrame
+            Full grid-search results with columns
+            ``["alpha", "gamma", "cv_mse"]``, sorted ascending by
+            ``cv_mse``.
+        """
+        if alphas is None:
+            alphas = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0]
+        if gammas is None:
+            gammas = [0.001, 0.01, 0.1, 0.5, 1.0]
+
+        X_arr = np.asarray(X_train, dtype=float)
+        y_arr = np.asarray(y_train, dtype=float)
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
+
+        best_alpha, best_gamma = alphas[0], gammas[0]
+        best_cv_mse = np.inf
+        rows = []
+
+        for alpha in alphas:
+            for gamma in gammas:
+                fold_mses = []
+                for train_idx, val_idx in kf.split(X_arr):
+                    X_tr, X_val = X_arr[train_idx], X_arr[val_idx]
+                    y_tr, y_val = y_arr[train_idx], y_arr[val_idx]
+
+                    model = KernelRidgeScratch(alpha=alpha, gamma=gamma)
+                    model.fit(X_tr, y_tr)
+                    y_pred_val = model.predict(X_val)
+                    fold_mses.append(mean_squared_error(y_val, y_pred_val))
+
+                cv_mse = float(np.mean(fold_mses))
+                rows.append({"alpha": alpha, "gamma": gamma, "cv_mse": cv_mse})
+
+                if cv_mse < best_cv_mse:
+                    best_cv_mse = cv_mse
+                    best_alpha, best_gamma = alpha, gamma
+
+        cv_results = pd.DataFrame(rows).sort_values("cv_mse").reset_index(drop=True)
+        return best_alpha, best_gamma, cv_results
+
+    def train_kernel_regression(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        alpha: float = 0.5,
+        gamma: float = 0.1,
+    ) -> Any:
+        """Train a Custom Kernel Ridge Regression model from scratch.
+
+        Uses an RBF kernel with built-in Z-score feature scaling.
+        Pass ``alpha`` and ``gamma`` obtained from
+        :meth:`cv_select_kernel_params` to avoid hard-coded hyper-parameters.
+
+        Parameters
+        ----------
+        X_train : pd.DataFrame of shape (n_samples, n_features)
+            Training feature matrix.
+        y_train : pd.Series of shape (n_samples,)
+            Training target vector.
+        alpha : float, optional
+            Regularisation strength. Default is 0.5.
+        gamma : float, optional
+            RBF kernel bandwidth. Default is 0.1.
 
         Returns
         -------
         KernelRidgeScratch
             Fitted Kernel Ridge Regression model.
         """
-        model = KernelRidgeScratch(alpha=0.5, gamma=0.1)
+        model = KernelRidgeScratch(alpha=alpha, gamma=gamma)
         model.fit(X_train, y_train)
         return model
 
