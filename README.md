@@ -1,161 +1,161 @@
-# Blues Estimator Project
+# Dự án Blues Estimator
 
-Implementation of Best Linear Unbiased Estimators from scratch. Including OLS, Ridge, and Lasso without 'sklearn' training wheels. From Gauss-Markov proofs to real-world data pipelines, the math is rhythmic, and the residuals have soul. 100% manual, 0% mechanical failure.
-
+Nghiên cứu và triển khai thực nghiệm các Bộ ước lượng Tuyến tính Không chệch Tốt nhất (BLUE) từ nền tảng gốc — bao gồm OLS, Ridge và Lasso — hoàn toàn độc lập với các thư viện hỗ trợ như scikit-learn. Từ việc tái hiện các chứng minh lý thuyết của định lý Gauss-Markov đến việc xây dựng pipeline xử lý dữ liệu thực tế, quá trình này làm nổi bật tính quy luật chặt chẽ của toán học và ý nghĩa thống kê sâu sắc của các phần dư (residuals). Giải pháp được tối ưu hóa 100% bằng thuật toán thuần, đảm bảo tính toàn vẹn và khả năng kiểm soát hệ thống từ cốt lõi.
 ## Quick Start
 
-Follow these steps to get started. See [CONTRIBUTING](CONTRIBUTING.md) for the complete guide.
+Làm theo các bước sau để bắt đầu. Xem [CONTRIBUTING](CONTRIBUTING.md) để có hướng dẫn đầy đủ.
 
-1. Clone the repository.
-2. Install `uv`.
-3. Install dependencies with `uv sync`.
-4. Run any code with `uv run`.
-5. Run `uv run pytest` to run all test scripts.
+1. Clone repository.
+2. Cài đặt `uv`.
+3. Cài đặt dependencies bằng `uv sync`.
+4. Chạy bất kỳ code nào bằng `uv run`.
+5. Chạy `uv run pytest` để chạy tất cả các test.
 
-## Project Structure
+## Cấu trúc Dự án
 
 ```bash
-blues-estimator-project         # To be replaced with Group_<ID>
+blues-estimator-project         # Sẽ được đổi tên thành Group_<ID>
 ├── report/
-│   ├── report.pdf              # The final PDF (LaTeX/Markdown)  
-│   └── report.tex              # Source file for the report
+│   ├── report.pdf              # Bản PDF cuối cùng (LaTeX/Markdown)  
+│   └── report.tex              # File nguồn cho báo cáo
 ├── part1/
-│   ├── ols_implementation.py   # Core OLS & Math from scratch
-│   ├── ridge_lasso.py          # Regularization logic
-│   ├── residual_analysis.py    # Code for diagnostic plots
-│   ├── cross_validation.py     # k-fold CV implementation
-│   └── part1_notebook.ipynb    # Theoretical demo & proofs
+│   ├── ols_implementation.py   # OLS cốt lõi & toán học từ đầu
+│   ├── ridge_lasso.py          # Logic regularization
+│   ├── residual_analysis.py    # Code cho các đồ thị chẩn đoán
+│   ├── cross_validation.py     # Implement k-fold CV
+│   └── part1_notebook.ipynb    # Demo lý thuyết & chứng minh
 ├── part2/
 │   ├── data/
-│   │   └── dataset.csv         # Original real-world data
-│   ├── data_pipeline.py        # DataPipeline class for cleaning
-│   ├── model_comparison.py     # Comparison of 3+ models
+│   │   └── dataset.csv         # Dữ liệu thực tế gốc
+│   ├── data_pipeline.py        # Class DataPipeline để làm sạch dữ liệu
+│   ├── model_comparison.py     # So sánh 3+ mô hình
 │   ├── advanced_methods.py     # Bonus: Kernel/Bayesian
-│   └── part2_notebook.ipynb    # Real-world application & discussion
-├── README.md                   # Project overview & usage instructions
-├── pyproject.toml              # Package dependencies "Source of Truth"
-└── requirements.txt            # Package dependencies, exported from `uv`
+│   └── part2_notebook.ipynb    # Ứng dụng thực tế & thảo luận
+├── README.md                   # Tổng quan dự án & hướng dẫn sử dụng
+├── pyproject.toml              # Danh sách dependencies "nguồn sự thật"
+└── requirements.txt            # Danh sách dependencies, export từ `uv`
 ```
 
-## Project Roadmap
+## Lộ trình Dự án
 
-### Part 1
+### Phần 1
 
-#### Implementation
+#### Implement
 
-For each function in the list:
+Với mỗi hàm trong danh sách:
 
-1. Present the mathematical formula.
-2. Implement with vanilla Python.
-3. Demonstrate with test data.
-4. Test and compare with `NumPy` or `sklearn`.
+1. Trình bày công thức toán học.
+2. Implement bằng Python thuần.
+3. Minh họa với dữ liệu kiểm thử.
+4. Kiểm tra và so sánh với `NumPy` hoặc `sklearn`.
 
-Functions to be implemented:
+Các hàm cần implement:
 
 ```bash
-ols_fit(X, y)                   # Compute OLS solution (beta_hat) and Residual Variance Estimator (squared_sigma_hat)
-hat_matrix(X)                   # Compute matrix H and check for idempotency
-model_metrics(y, y_hat, p)      # Compute various metrics
-coef_inference(X, y, beta_hat, sigma2)  # Compute SE, t-stat, p-value and CI
-vif(X)                          # Compute VIF
-ridge_fit(X, y, lam)            # Compute Ridge Regression, draw Ridge Trace
-residual_plots(X, y, beta_hat)  # Draw four residual plots
-kfold_cv(X, y, k)               # k-fold cross-validation, compute CV score
+ols_fit(X, y)                   # Tính nghiệm OLS (beta_hat) và ước lượng phương sai phần dư (squared_sigma_hat)
+hat_matrix(X)                   # Tính ma trận H và kiểm tra tính lũy đẳng
+model_metrics(y, y_hat, p)      # Tính các chỉ số đánh giá mô hình
+coef_inference(X, y, beta_hat, sigma2)  # Tính SE, t-stat, p-value và CI
+vif(X)                          # Tính VIF
+ridge_fit(X, y, lam)            # Tính Ridge Regression, vẽ Ridge Trace
+residual_plots(X, y, beta_hat)  # Vẽ bốn đồ thị phần dư
+kfold_cv(X, y, k)               # k-fold cross-validation, tính CV score
 ```
 
-Lastly, demonstrate Gauss-Markov by simulating Monte Carlo to verify **unbiasedness** ($\mathbb{E}[\hat{\beta}] = \beta$) and **minimum variance**.
+Cuối cùng, minh họa định lý Gauss-Markov bằng mô phỏng Monte Carlo để xác minh **tính không chệch** ($\mathbb{E}[\hat{\beta}] = \beta$) và **phương sai tối thiểu**.
 
-#### Acceptance Criteria
+#### Tiêu chí Chấp nhận
 
-- [ ] **Mathematical Parity**: All custom functions (e.g., `ols_fit`, `ridge_fit`) must produce coefficients that match `scikit-learn` or `statsmodels` output with a tolerance of $\varepsilon = 10^{-6}$.
-- [ ] **Proof of Property**: The Monte Carlo simulation must successfully demonstrate that the OLS estimator is unbiased ($\mathbb{E}[\hat{\beta}] = \beta$) and maintains the lowest variance among linear unbiased estimators as per Gauss-Markov.
-- [ ] **Diagnostic Integrity**: The `residual_plots` function must generate all four standard plots (Residuals vs Fitted, Normal Q-Q, Scale-Location, and Residuals vs Leverage) with proper axis labeling.
-- [ ] **Unit Testing**: Each mathematical function must pass at least two unique unit tests using both synthetic and known baseline datasets.
-- [ ] **Matrix Validation**: The `hat_matrix` function must numerically verify idempotency ($H^2 \approx H$) and symmetry ($H^T \approx H$).
+- [ ] **Độ chính xác**: Tất cả các hàm tự viết (ví dụ: `ols_fit`, `ridge_fit`) phải cho ra các hệ số khớp với output của `scikit-learn` hoặc `statsmodels` với dung sai $\varepsilon = 10^{-6}$.
+- [ ] **Kiểm chứng Thực nghiệm Định lý Gauss-Markov**: Mô phỏng Monte Carlo phải chứng minh thành công rằng ước lượng OLS là không chệch ($\mathbb{E}[\hat{\beta}] = \beta$) và có phương sai thấp nhất trong số các ước lượng tuyến tính không chệch theo Gauss-Markov.
+- [ ] **Tính toàn vẹn Chẩn đoán**: Hàm `residual_plots` phải tạo đủ bốn đồ thị chuẩn (Residuals vs. Fitted, Normal Q-Q, Scale-Location, và Residuals vs. Leverage) với nhãn trục đầy đủ.
+- [ ] **Unit Test**: Mỗi hàm toán học phải vượt qua ít nhất hai unit test độc lập, sử dụng cả dữ liệu tổng hợp lẫn dữ liệu baseline đã biết trước.
+- [ ] **Xác thực Ma trận**: Hàm `hat_matrix` phải xác minh bằng số tính lũy đẳng ($H^2 \approx H$) và tính đối xứng ($H^T \approx H$).
 
-### Part 2
-#### Summary of Dataset Research & Strategy
+### Phần 2
 
-**Source**
+#### Tóm tắt Nghiên cứu Dữ liệu & Chiến lược
+
+**Nguồn**
 - Kaggle: https://www.kaggle.com/datasets/jboysen/mri-and-alzheimers
 
-**1. Confirm the chosen dataset**
-* **Dataset Name:** OASIS Longitudinal Brain MRI Dataset (Alzheimer's Disease).
-* **Description:** A real-world dataset consisting of a longitudinal collection of 150 subjects aged 60 to 96. Each subject was scanned on two or more visits, providing clinical and cognitive metrics alongside brain volume data.
-* **Goal:** Predict the continuous cognitive decline score `MMSE` (Mini-Mental State Examination, range 0-30) using regression, based on age, education, and brain volume atrophy.
+**1. Xác nhận dataset đã chọn**
+* **Tên Dataset:** OASIS Longitudinal Brain MRI Dataset (Bệnh Alzheimer's).
+* **Mô tả:** Dataset thực tế gồm một tập hợp dọc của 150 đối tượng trong độ tuổi 60 đến 96. Mỗi đối tượng được quét ít nhất hai lần, cung cấp các chỉ số lâm sàng và nhận thức cùng dữ liệu thể tích não.
+* **Mục tiêu:** Dự đoán điểm suy giảm nhận thức `MMSE` (Mini-Mental State Examination, thang điểm 0-30) bằng hồi quy, dựa trên tuổi, trình độ học vấn và teo não.
 
-**2. Summary of key features and their types**
-*(Total rows: n = 373)*
+**2. Tóm tắt các feature chính và kiểu dữ liệu**
+*(Tổng số hàng: n = 373)*
 
-| Feature Name | Type | Continuous/Discrete | Missing Values | Role | Description |
+| Tên Feature | Kiểu | Liên tục/Rời rạc | Giá trị Thiếu | Vai trò | Mô tả |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `Subject_ID` | Categorical | N/A | 0 (0%) | Index/Group | Unique identifier for each patient. |
-| **`MMSE`** | **Numerical** | **Continuous*** | **2 (~0.5%)** | **Target** | Mini-Mental State Examination score. |
-| `Age` | Numerical | Continuous | 0 (0%) | Feature | Patient's age at the time of the visit. |
-| `nWBV` | Numerical | **Continuous** | 0 (0%) | Feature | Normalized Whole Brain Volume (brain atrophy). |
-| `eTIV` | Numerical | **Continuous** | 0 (0%) | Feature | Estimated Total Intracranial Volume. |
-| `SES` | Ordinal | Discrete | **19 (~5.09%)** | Feature | Socioeconomic Status (1 = highest, 5 = lowest). |
+| `Subject_ID` | Categorical | N/A | 0 (0%) | Index/Group | Định danh duy nhất cho mỗi bệnh nhân. |
+| **`MMSE`** | **Số** | **Liên tục*** | **2 (~0.5%)** | **Target** | Điểm Mini-Mental State Examination. |
+| `Age` | Số | Liên tục | 0 (0%) | Feature | Tuổi bệnh nhân tại thời điểm thăm khám. |
+| `nWBV` | Số | **Liên tục** | 0 (0%) | Feature | Normalized Whole Brain Volume (teo não). |
+| `eTIV` | Số | **Liên tục** | 0 (0%) | Feature | Estimated Total Intracranial Volume. |
+| `SES` | Ordinal | Rời rạc | **19 (~5.09%)** | Feature | Địa vị Kinh tế Xã hội (1 = cao nhất, 5 = thấp nhất). |
 
-*\*Note: While MMSE is mathematically a discrete bounded integer (0-30), it is widely accepted and treated as a continuous cognitive gradient in clinical regression modeling.*
+*\*Lưu ý: Mặc dù MMSE về mặt toán học là số nguyên hữu hạn rời rạc (0-30), nó được chấp nhận rộng rãi và xử lý như một thang đo nhận thức liên tục trong mô hình hồi quy lâm sàng.*
 
-**3. Proposed train/test split ratio and `random_state`**
-* **Split Ratio:** 80% Train / 20% Test.
-* **Split Strategy:** **Group Shuffle Split** (Grouped by `Subject_ID`). 
-    * *Reasoning:* Since this is longitudinal data (the same patient appears multiple times across different visits), a standard random split might put Visit 1 of Patient A in the train set and Visit 2 of Patient A in the test set, causing severe data leakage. Grouping by Subject ID ensures a patient is strictly isolated in either the train or the test set.
-* **`random_state`:** 42 (Explicitly set for reproducibility of the OLS baseline).
+**3. Tỉ lệ chia train/test và `random_state` đề xuất**
+* **Tỉ lệ Chia:** 80% Train / 20% Test.
+* **Chiến lược Chia:** **Group Shuffle Split** (nhóm theo `Subject_ID`).
+    * *Lý do:* Đây là dữ liệu dọc — cùng một bệnh nhân xuất hiện nhiều lần qua các lần thăm khám khác nhau. Nếu chia ngẫu nhiên thông thường, Visit 1 của Patient A có thể nằm trong tập train còn Visit 2 lại nằm trong tập test, gây data leakage nghiêm trọng. Group bởi Subject ID đảm bảo một bệnh nhân chỉ xuất hiện ở đúng một trong hai tập.
+* **`random_state`:** 42 (đặt cố định để đảm bảo tái tạo kết quả baseline OLS).
 
-**4. Any features flagged as likely candidates for dropping**
-* **Flagged for Natural Missing Values:** `SES` (Socioeconomic Status) and `MMSE` in certain follow-ups.
-    * *Reasoning:* Meets the $\ge 5\%$ missing condition (specifically ~5.09% for SES). In elderly and dementia research, "Natural Missingness" occurs frequently due to patient confusion, inability to recall past income/education details, or refusal/inability to complete the full cognitive survey during a clinical visit.
-    * *Action:* **Do not drop.** Will be handled using Median Imputation or KNN Imputation to preserve the highly valuable continuous brain volume (`nWBV`, `eTIV`) records of those visits for the OLS baseline.
+**4. Các feature được đánh dấu là ứng viên tiềm năng để loại bỏ**
+* **Được đánh dấu vì Missing Values tự nhiên:** `SES` (Địa vị Kinh tế Xã hội) và `MMSE` trong một số lần theo dõi.
+    * *Lý do:* Đáp ứng điều kiện $\ge 5\%$ giá trị thiếu (cụ thể ~5.09% cho SES). Trong nghiên cứu về người cao tuổi và chứng mất trí, "Natural Missingness" xảy ra thường xuyên do bệnh nhân nhầm lẫn, không nhớ được thu nhập/học vấn quá khứ, hoặc từ chối/không thể hoàn thành bài kiểm tra nhận thức đầy đủ trong buổi thăm khám.
+    * *Hành động:* **Không loại bỏ.** Sẽ xử lý bằng Median Imputation hoặc KNN Imputation để bảo toàn các bản ghi thể tích não (`nWBV`, `eTIV`) có giá trị cao của những lần thăm khám đó phục vụ baseline OLS.
 
-#### Implementation
+#### Implement
 
-1. Design and implement `DataPipeline` class that can handle missing values, encoding, normalization, `fit` on train data, `transform` on test data.
-2. Compare MAE, RMSE, $R^2$ on test dataset.
-3. Use $k$-fold with $k = 5$ or $k = 10$ to pick hyperparameter $\lambda$ for Ridge or Lasso.
-4. Perform residual analysis with the best model, drawing four analysis plots.
-5. Investigate features by drawing normalized regression coefficient plot.
-6. Draw appropriate conclusions.
+1. Thiết kế và implement class `DataPipeline` có khả năng xử lý missing values, encoding, chuẩn hóa, `fit` trên tập train, `transform` trên tập test.
+2. So sánh MAE, RMSE, $R^2$ trên tập test.
+3. Dùng $k$-fold với $k = 5$ hoặc $k = 10$ để chọn hyperparameter $\lambda$ cho Ridge hoặc Lasso.
+4. Thực hiện phân tích phần dư với mô hình tốt nhất, vẽ bốn đồ thị phân tích.
+5. Khảo sát các feature bằng cách vẽ đồ thị normalized regression coefficient.
+6. Rút ra các kết luận phù hợp.
 
-#### Acceptance Criteria
+#### Tiêu chí Chấp nhận
 
-- [ ] **Pipeline Encapsulation**: The `DataPipeline` class must correctly handle stateful transformations, ensuring that `fit` is only called on training data and `transform` is applied to test data to prevent data leakage.
-- [ ] **Preprocessing Robustness**: The pipeline must successfully handle 5% missing values via imputation and convert all categorical variables into numerical formats without manual pre-cleaning.
-- [ ] **Model Optimization**: Hyperparameter $\lambda$ for Ridge and Lasso must be selected based on the lowest average MSE/RMSE across a 5-fold or 10-fold cross-validation split.
-- [ ] **Comparative Analysis**: The final report must include a side-by-side comparison table of MAE, RMSE, and $R^2$ for at least three distinct models.
-- [ ] **Reproducibility**: Running the pipeline with a fixed `random_state` must produce identical results across different machines using the `uv` environment.
+- [ ] **Pipeline**: Class `DataPipeline` phải xử lý đúng các phép biến đổi có trạng thái, đảm bảo `fit` chỉ được gọi trên tập train và `transform` được áp dụng cho tập test để tránh data leakage.
+- [ ] **Preprocessing**: Pipeline phải xử lý thành công 5% missing values qua imputation và chuyển đổi tất cả các biến categorical sang định dạng số mà không cần làm sạch thủ công trước.
+- [ ] **Tối ưu hóa Mô hình**: Hyperparameter $\lambda$ cho Ridge và Lasso phải được chọn dựa trên MSE/RMSE trung bình thấp nhất qua 5-fold hoặc 10-fold cross-validation.
+- [ ] **Phân tích So sánh**: Báo cáo cuối cùng phải có bảng so sánh MAE, RMSE và $R^2$ của ít nhất ba mô hình khác nhau.
+- [ ] **Tái tạo kết quả**: Chạy pipeline với `random_state` cố định phải cho ra kết quả giống nhau trên các máy khác nhau khi dùng môi trường `uv`.
 
-### Report
+### Báo cáo
 
-The report should include the following sections:
+Báo cáo bao gồm các mục sau:
 
-1. Cover page
-2. Table of Contents
-3. Part 1: Theory and Visualization
-4. Part 2: Application on a Real-world Dataset
-5. Conclusions
-6. Bibliography and References
-7. Appendices
+1. Trang bìa
+2. Mục lục
+3. Phần 1: Lý thuyết và Trực quan hóa
+4. Phần 2: Ứng dụng trên Dataset Thực tế
+5. Kết luận
+6. Tài liệu Tham khảo
+7. Phụ lục
 
-## Other Specifications
+## Các Yêu cầu Khác
 
-- Python code must be formatted and linted with `Black` and `Ruff`
-- Docstring coverage reaches 90%.
-- All plots drawn must include a title, axis labels, and legends.
-- Explain all data-related decisions with math.
-- Set static `random_state` and `seed` to get reproducible results.
-- Each function needs at least _two_ unit tests with known datasets.
+- Code Python phải được format và lint bằng `Black` và `Ruff`.
+- Docstring coverage đạt 90%.
+- Tất cả các đồ thị phải có tiêu đề, nhãn trục và chú giải.
+- Giải thích tất cả các quyết định liên quan đến dữ liệu bằng toán học.
+- Đặt `random_state` và `seed` cố định để có kết quả tái tạo được.
+- Mỗi hàm cần ít nhất _hai_ unit test với các dataset đã biết trước.
 
-## License
+## Giấy phép
 
-This project is licensed under the **MIT license**.
+Dự án này được cấp phép theo **giấy phép MIT**.
 
-See [LICENSE](LICENSE.md) for more information.
+Xem [LICENSE](LICENSE.md) để biết thêm thông tin.
 
-## References
+## Tài liệu Tham khảo
 
-### Repo setup
+### Cài đặt Repo
 
 #### README
 
@@ -169,36 +169,36 @@ See [LICENSE](LICENSE.md) for more information.
 - <https://github.com/gitattributes/gitattributes>
 - <https://richienb.github.io/gitattributes-generator/>
 
-#### `uv` Package and Project Manager
+#### `uv` — Package and Project Manager
 
 - <https://docs.astral.sh/uv/>
 - <https://docs.astral.sh/uv/getting-started/installation/>
 
-#### `pytest` unit testing
+#### `pytest` — Unit Testing
 
 - <https://docs.pytest.org/en/stable/>
 - <https://docs.pytest.org/en/stable/getting-started.html>
 
-### Math and Theory Foundation
+### Nền tảng Toán học và Lý thuyết
 
-#### Seeing Theory (Brown University)
+#### Seeing Theory (Đại học Brown)
 
 - <https://seeing-theory.brown.edu/index.html>
-  - See "Regression Analysis"
+  - Xem "Regression Analysis"
 
 #### 3Blue1Brown
 
 - <https://www.3blue1brown.com>
-  - See lessons in Linear Algebra, Calculus, Probability
+  - Xem các bài về Đại số Tuyến tính, Giải tích, Xác suất
 
-#### StatQuest with Josh Starmer (YouTube)
+#### StatQuest với Josh Starmer (YouTube)
 
 - <https://www.youtube.com/@statquest/playlists>
-  - See "Linear Regression" playlist
+  - Xem playlist "Linear Regression"
 
-### Source Code Implementation
+### Implement Source Code
 
-#### NeuralNine: Linear Regression from Scratch (Video & Code)
+#### NeuralNine: Linear Regression từ Đầu (Video & Code)
 
 - <https://www.youtube.com/watch?v=jMpNdxnDaXg>
 
@@ -206,11 +206,11 @@ See [LICENSE](LICENSE.md) for more information.
 
 - <https://www.kaggle.com/code/egazakharenko/linear-regression-from-scratch-its-types>
 
-#### Stackademic: Ridge & Lasso From Scratch
+#### Stackademic: Ridge & Lasso từ Đầu
 
 - <https://blog.stackademic.com/ridge-lasso-regression-from-scratch-bfd320ea3a83>
 
-#### CodeSignal: Implementing Multiple Linear Regression from Scratch
+#### CodeSignal: Implement Multiple Linear Regression từ Đầu
 
 - <https://codesignal.com/learn/courses/regression-and-gradient-descent/lessons/implementing-multiple-linear-regression-from-scratch>
 
@@ -220,4 +220,4 @@ See [LICENSE](LICENSE.md) for more information.
 
 ## Changelog
 
-- 2026-05-01: Project created.
+- 2026-05-01: Dự án được tạo.
