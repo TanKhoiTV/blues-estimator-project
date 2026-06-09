@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from sklearn.metrics import (
     mean_absolute_error,
@@ -307,20 +308,36 @@ class ModelComparison:
         threshold: float = 10.0,
         iterative: bool = True,
     ) -> Tuple[pd.DataFrame, List[str], pd.DataFrame]:
-        """Select features by removing predictors with high VIF."""
+        """Select features by iteratively removing predictors with Centered VIF > threshold."""
         if not isinstance(X_train, pd.DataFrame):
             X_train = pd.DataFrame(X_train)
+
+        # Tạo ma trận có chèn Intercept để buộc VIF phải là Centered VIF
+        X_aug = X_train.copy()
+        X_aug.insert(0, "Intercept", 1.0)
 
         selected_features = list(X_train.columns)
         removed_features = []
 
-        while len(selected_features) > 1:
-            current_X = X_train[selected_features]
-            current_vif = vif(current_X.to_numpy(dtype=float))
-            max_idx = int(np.argmax(current_vif))
-            max_vif = current_vif[max_idx]
+        while True:
+            # Chỉ lấy các cột Intercept + biến đang được chọn
+            cols = ["Intercept"] + selected_features
+            current_X = X_aug[cols]
 
-            if not np.isfinite(max_vif) or max_vif > threshold:
+            # Tính VIF cho tất cả các cột. Vị trí 0 là Intercept.
+            vif_data = [
+                variance_inflation_factor(current_X.values, i)
+                for i in range(current_X.shape[1])
+            ]
+
+            # Bỏ qua VIF của Intercept, chỉ xét VIF của các biến (từ index 1 trở đi)
+            feature_vifs = vif_data[1:]
+
+            max_idx = int(np.argmax(feature_vifs))
+            max_vif = feature_vifs[max_idx]
+
+            # Nếu VIF cao nhất vượt ngưỡng, loại bỏ biến đó
+            if np.isfinite(max_vif) and max_vif > threshold:
                 feature_to_remove = selected_features[max_idx]
                 removed_features.append(
                     {
@@ -331,17 +348,27 @@ class ModelComparison:
                 )
                 selected_features.pop(max_idx)
 
-                if iterative:
+                # Lặp tiếp nếu còn biến và chế độ iterative bật
+                if iterative and len(selected_features) > 0:
                     continue
-
             break
 
-        final_vif_values = vif(X_train[selected_features].to_numpy(dtype=float))
+        # ==========================================
+        # Tính toán lại bảng VIF cuối cùng
+        # ==========================================
+        final_cols = ["Intercept"] + selected_features
+        final_X_aug = X_aug[final_cols]
+
+        final_vif_values = [
+            variance_inflation_factor(final_X_aug.values, i)
+            for i in range(1, final_X_aug.shape[1])  # Bắt đầu từ 1 để bỏ qua Intercept
+        ]
+
         final_vif_table = pd.DataFrame(
             {
                 "feature": selected_features,
                 "VIF": final_vif_values,
-                "High Multicollinearity": final_vif_values > threshold,
+                "High Multicollinearity": [v > threshold for v in final_vif_values],
                 "removed": False,
             }
         )

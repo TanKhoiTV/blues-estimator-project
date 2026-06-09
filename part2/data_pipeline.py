@@ -9,6 +9,7 @@ from typing import Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 
 
 class DataPipeline:
@@ -98,9 +99,11 @@ class DataPipeline:
 
         # Học tri thức điền khuyết cho biến SES
         if "SES" in X.columns and "EDUC" in X.columns:
-            # 1. Lưu Yếu vị tổng thể (Global Mode) để dự phòng
-            mode_ses = X["SES"].mode(dropna=True)
-            self.ses_global_mode_ = mode_ses[0] if not mode_ses.empty else 2.0
+            # 1. Lưu Trung vị toàn cục (Global Median) từ tập train để dự phòng
+            global_median = X["SES"].median(skipna=True)
+            self.ses_global_median_ = (
+                global_median if not pd.isna(global_median) else 3.0
+            )
 
             # 2. Học từ điển Trung vị SES theo từng năm học vấn (EDUC)
             self.ses_educ_medians_ = X.groupby("EDUC")["SES"].median().to_dict()
@@ -136,25 +139,16 @@ class DataPipeline:
         """
         df = df.copy()
 
-        # Tính trung vị toàn cục của SES phòng trường hợp khẩn cấp
-        global_ses_median = df["SES"].median() if "SES" in df.columns else 3.0
-        if pd.isna(global_ses_median):
-            global_ses_median = (
-                3.0  # Giá trị mặc định an toàn nếu toàn bộ cột SES trống
-            )
+        # Dùng trung vị toàn cục đã học từ tập train, không tính lại từ df hiện tại
+        global_ses_median = getattr(self, "ses_global_median_", 3.0)
 
         if "SES" in df.columns and "EDUC" in df.columns:
-            # Điền khuyết theo nhóm EDUC
-            for idx, row in df[df["SES"].isna()].iterrows():
-                educ_val = row["EDUC"]
-                # Lấy trung vị theo nhóm EDUC đã học từ tập Train
-                group_median = self.ses_educ_medians_.get(educ_val)
+            # ĐÃ SỬA LỖI FOR: Sử dụng .map() và .fillna() vector hóa thay cho vòng lặp iterrows thủ công
+            mapped_medians = df["EDUC"].map(getattr(self, "ses_educ_medians_", {}))
+            df["SES"] = df["SES"].fillna(mapped_medians)
 
-                # Kiểm tra nếu không tìm thấy KEY hoặc giá trị tìm được là NaN
-                if pd.isna(group_median):
-                    df.at[idx, "SES"] = global_ses_median
-                else:
-                    df.at[idx, "SES"] = group_median
+            # Điền khuyết dự phòng cho những nhóm EDUC mới
+            df["SES"] = df["SES"].fillna(global_ses_median)
 
             # Ép kiểu an toàn sau khi đã đảm bảo sạch bóng NaN
             df["SES"] = df["SES"].astype(int)
@@ -179,9 +173,16 @@ class DataPipeline:
 
         # Ensure categories are consistent with training data
         for col in self.categorical_columns_:
-            df[col] = df[col].where(
-                df[col].isin(self.categorical_values_[col]), other=None
-            )
+            # ĐÃ SỬA LỖI FOR: Gán giá trị biến lạ bằng Mode thay vì other=None để tránh sinh ra NaN
+            fallback_mode = getattr(self, "categorical_modes_", {}).get(col)
+            if fallback_mode is not None:
+                df[col] = df[col].where(
+                    df[col].isin(self.categorical_values_[col]), other=fallback_mode
+                )
+            else:
+                df[col] = df[col].where(
+                    df[col].isin(self.categorical_values_[col]), other=None
+                )
 
             df[col] = pd.Categorical(df[col], categories=self.categorical_values_[col])
 
@@ -330,11 +331,25 @@ class DataPipeline:
                 f"Không thể tiếp tục tiền xử lý luồng OLS."
             )
 
+        # Thêm cột Subject ID trước khi split
+        groups = df["Subject ID"]
+
         # Giữ lại đúng các cột quy chuẩn
         df = df[required_columns]
 
+        gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        train_idx, test_idx = next(
+            gss.split(
+                df.drop(columns=[target_column]), df[target_column], groups=groups
+            )
+        )
+
+        X = df.drop(columns=[target_column])
+        y = df[target_column]
+
         # (Chia Train/Test để chống Leakage)
-        X_train, X_test, y_train, y_test = self.split_data(df, target_column)
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
         # Learn parameters ONLY from training data
         self.fit(X_train)
