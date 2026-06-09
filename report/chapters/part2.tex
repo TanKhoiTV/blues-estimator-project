@@ -282,7 +282,7 @@ Mô hình OLS chọn biến áp dụng quy trình hai bước. Đầu tiên sử
 So sánh với OLS Cơ Bản:
 
 \begin{itemize}[topsep=0pt, itemsep=2.5pt, leftmargin=1.5cm]
-    \item Sau khi loại bỏ biến \texttt{EDUC}, các biến còn lại đều mang ý nghĩa thống kê với p-value hợp lệ. Hệ số của \texttt{SES} thay đổi đáng kể so với OLS Cơ Bản từ $-0.49 \left(p = 0.047\right)$ lên $-0.73 \left(p = 2.83 \times 10^{=5}\right)$ và khoảng tin cậy thu hẹp lại. Do đó mà trong mô hình cơ bản, \texttt{EDUC} đang che khuất một phần tác động thực sự của \texttt{SES} lên \texttt{MMSE}.
+    \item Sau khi loại bỏ biến \texttt{EDUC}, các biến còn lại đều mang ý nghĩa thống kê với p-value hợp lệ. Hệ số của \texttt{SES} thay đổi đáng kể so với OLS Cơ Bản từ $-0.49 \left(p = 0.047\right)$ lên $-0.73 \left(p = 2.83 \times 10^{-5}\right)$ và khoảng tin cậy thu hẹp lại. Do đó mà trong mô hình cơ bản, \texttt{EDUC} đang che khuất một phần tác động thực sự của \texttt{SES} lên \texttt{MMSE}.
     \item Về mặt hiệu năng dự báo, OLS Chọn Biến không ghi nhận quá nhiều thay đổi so với OLS Cơ Bản. Giá trị $R^2$ âm cho thấy cả hai mô hình đều dự báo kém hơn mô hình trung bình đơn giản trên tập test. Cho thấy giới hạn của hồi quy tuyến tính trên tập dữ liệu có phân phối lệch mạnh.
 \end{itemize}
 
@@ -392,7 +392,7 @@ Dựa trên bảng so sánh, mô hình hồi quy Ridge là mô hình tốt nhấ
 Mặc dù giá trị $R^2$ âm ở trên tất cả các mô hình cho thấy không mô hình nào vượt được mốc dự báo trung bình đơn giản trên tập test, Ridge vẫn được chọn là mô hình tốt nhất vì hai lý do.
 
 \begin{itemize}[topsep=0pt, itemsep=2.5pt, leftmargin=1.5cm]
-    \item Về mặt thống kê, số hạng phạt $L_2$ để kiểm soát hiệu quả phương sai của tham số, giảm \texttt{RMSE} xuống còn 3.4\% so với OLS.
+    \item Về mặt thống kê, số hạng phạt $L_2$ để kiểm soát hiệu quả phương sai của tham số, giảm \texttt{RMSE} xuống còn 1.04\% so với OLS.
     \item Về mặt ứng dụng lâm sàng, Ridge duy trì tính diễn giải được của hệ số hồi quy - có thể đọc trực tiếp chiếu và độ lớn tác động của từng biến sinh học lên \texttt{MMSE}. 
 \end{itemize}
 
